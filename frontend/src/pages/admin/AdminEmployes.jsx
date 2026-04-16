@@ -60,7 +60,7 @@ function AdminEmployes() {
       const storedPhoto = localStorage.getItem(`profilePhoto_${emp.id}`);
       if (storedPhoto && (storedPhoto.startsWith('data:') || storedPhoto.startsWith('http'))) {
         newCache[emp.id] = storedPhoto;
-      } else if (emp.photo && emp.photo.startsWith('data:')) {
+      } else if (emp.photo && emp.photo.startsWith('data:') && emp.photo.length < 80000) {
         newCache[emp.id] = emp.photo;
         localStorage.setItem(`profilePhoto_${emp.id}`, emp.photo);
       } else {
@@ -76,7 +76,9 @@ function AdminEmployes() {
           const reader = new FileReader();
           reader.onloadend = () => {
             const base64 = reader.result;
-            localStorage.setItem(`profilePhoto_${emp.id}`, base64);
+            if (base64.length < 80000) {
+              localStorage.setItem(`profilePhoto_${emp.id}`, base64);
+            }
             setPhotoCache(prev => ({ ...prev, [emp.id]: base64 }));
           };
           reader.readAsDataURL(response.data);

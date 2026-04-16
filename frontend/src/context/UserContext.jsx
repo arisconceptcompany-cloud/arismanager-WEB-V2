@@ -22,14 +22,14 @@ export const UserProvider = ({ children, initialUser }) => {
       
       const savedPhoto = localStorage.getItem(`profilePhoto_${userId}`);
       
-      if (savedPhoto && savedPhoto !== 'null' && savedPhoto !== 'undefined' && savedPhoto.length < 500000) {
+      if (savedPhoto && savedPhoto !== 'null' && savedPhoto !== 'undefined' && savedPhoto.length < 100000) {
         if (savedPhoto.startsWith('data:') || savedPhoto.startsWith('http')) {
           setProfilePhoto(savedPhoto);
           return;
         }
       }
       
-      if (savedPhoto && savedPhoto.length > 500000) {
+      if (savedPhoto && savedPhoto.length > 100000) {
         localStorage.removeItem(`profilePhoto_${userId}`);
       }
       
@@ -39,7 +39,7 @@ export const UserProvider = ({ children, initialUser }) => {
           reader.onloadend = () => {
             const base64 = reader.result;
             setProfilePhoto(base64);
-            if (base64.length < 1000000) {
+            if (base64.length < 80000) {
               localStorage.setItem(`profilePhoto_${userId}`, base64);
             }
           };
@@ -55,7 +55,7 @@ export const UserProvider = ({ children, initialUser }) => {
     setProfilePhoto(photo);
     setPhotoError(false);
     const userId = user?.id || initialUser?.id;
-    if (userId && photo && photo.length < 1000000) {
+    if (userId && photo && photo.length < 80000) {
       try {
         localStorage.setItem(`profilePhoto_${userId}`, photo);
       } catch (e) {

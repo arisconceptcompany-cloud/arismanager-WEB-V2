@@ -61,7 +61,7 @@ const handlePhotoChange = async (e) => {
                 if (k.startsWith('profilePhoto_')) localStorage.removeItem(k);
               });
               // Only save if small enough
-              if (photoUrl.length < 1000000) {
+              if (photoUrl.length < 80000) {
                 localStorage.setItem(`profilePhoto_${userId}`, photoUrl);
                 console.log('Saved to localStorage');
               }
@@ -76,7 +76,7 @@ const handlePhotoChange = async (e) => {
           console.error('Erreur upload photo:', error);
           // Try to save locally even if API fails
           const userId = initialUser?.id || profile?.id;
-          if (userId && base64.length < 1000000) {
+          if (userId && base64.length < 80000) {
             try {
               localStorage.setItem(`profilePhoto_${userId}`, base64);
               updateProfilePhoto(base64);

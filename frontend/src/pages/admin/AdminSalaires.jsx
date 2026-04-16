@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { DollarSign, Search, Edit, X, Save, User, Calendar } from 'lucide-react';
-import api from '../../services/api';
+import api, { DEFAULT_AVATAR } from '../../services/api';
 
 function AdminSalaires() {
   const [salaires, setSalaires] = useState([]);
@@ -16,6 +16,64 @@ function AdminSalaires() {
   const [filterEmploye, setFilterEmploye] = useState('all');
   const [filterMois, setFilterMois] = useState('');
   const [loading, setLoading] = useState(true);
+  const [photoCache, setPhotoCache] = useState({});
+
+  const preloadPhotos = (employeeList) => {
+    const newCache = {};
+    employeeList.forEach(emp => {
+      const storedPhoto = localStorage.getItem(`profilePhoto_${emp.id}`);
+      if (storedPhoto && (storedPhoto.startsWith('data:') || storedPhoto.startsWith('http'))) {
+        newCache[emp.id] = storedPhoto;
+      } else if (emp.photo && emp.photo.startsWith('data:')) {
+        newCache[emp.id] = emp.photo;
+      } else {
+        newCache[emp.id] = null;
+      }
+    });
+    setPhotoCache(newCache);
+    
+    const toFetch = employeeList.filter(emp => !newCache[emp.id] && !emp.photo?.startsWith('data:'));
+    toFetch.forEach(emp => {
+      api.get(`/photos/employe/${emp.id}`, { responseType: 'blob' })
+        .then(response => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64 = reader.result;
+            if (base64.length < 80000) {
+              localStorage.setItem(`profilePhoto_${emp.id}`, base64);
+            }
+            setPhotoCache(prev => ({ ...prev, [emp.id]: base64 }));
+          };
+          reader.readAsDataURL(response.data);
+        })
+        .catch(() => {
+          setPhotoCache(prev => ({ ...prev, [emp.id]: 'default' }));
+        });
+    });
+  };
+
+  const getPhotoUrl = (employeId) => {
+    const cached = photoCache[employeId];
+    if (cached === 'default') {
+      const emp = employes.find(e => e.id === employeId);
+      return `${DEFAULT_AVATAR}&name=${emp?.prenom || ''}+${emp?.nom || ''}`;
+    }
+    if (cached) return cached;
+    const storedPhoto = localStorage.getItem(`profilePhoto_${employeId}`);
+    if (storedPhoto && (storedPhoto.startsWith('data:') || storedPhoto.startsWith('http'))) {
+      return storedPhoto;
+    }
+    const emp = employes.find(e => e.id === employeId);
+    if (emp?.photo && emp.photo.startsWith('data:')) {
+      return emp.photo;
+    }
+    return null;
+  };
+
+  const handlePhotoError = (e) => {
+    e.target.style.display = 'none';
+    e.target.nextSibling.style.display = 'flex';
+  };
 
   useEffect(() => {
     fetchData();
@@ -29,6 +87,7 @@ function AdminSalaires() {
       ]);
       setSalaires(salaireRes.data || []);
       setEmployes(empRes.data || []);
+      preloadPhotos(empRes.data || []);
     } catch (error) {
       console.error('Erreur chargement:', error);
     } finally {
@@ -155,9 +214,27 @@ function AdminSalaires() {
               <tr key={salaire.id} className="border-b border-white/10 hover:bg-white/5">
                 <td className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
-                      {salaire.employe?.prenom?.[0]}{salaire.employe?.nom?.[0]}
-                    </div>
+                    {(() => {
+                      const photoUrl = getPhotoUrl(salaire.employe_id);
+                      const emp = employes.find(e => e.id === salaire.employe_id);
+                      return (
+                        <>
+                          {photoUrl ? (
+                            <img 
+                              src={photoUrl} 
+                              alt="" 
+                              className="w-8 h-8 rounded-full object-cover"
+                              onError={handlePhotoError}
+                            />
+                          ) : null}
+                          <div 
+                            className={`w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold ${photoUrl ? 'hidden' : ''}`}
+                          >
+                            {emp?.prenom?.[0]}{emp?.nom?.[0]}
+                          </div>
+                        </>
+                      );
+                    })()}
                     <span className="text-white">{getEmployeName(salaire.employe_id)}</span>
                   </div>
                 </td>

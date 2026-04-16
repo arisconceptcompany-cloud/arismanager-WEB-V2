@@ -1,12 +1,70 @@
 import { useState, useEffect } from 'react';
 import { Calendar, Check, X, Clock, User, FileText } from 'lucide-react';
-import api from '../../services/api';
+import api, { DEFAULT_AVATAR } from '../../services/api';
 
 function AdminConges() {
   const [conges, setConges] = useState([]);
   const [employes, setEmployes] = useState([]);
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
+  const [photoCache, setPhotoCache] = useState({});
+
+  const preloadPhotos = (employeeList) => {
+    const newCache = {};
+    employeeList.forEach(emp => {
+      const storedPhoto = localStorage.getItem(`profilePhoto_${emp.id}`);
+      if (storedPhoto && (storedPhoto.startsWith('data:') || storedPhoto.startsWith('http'))) {
+        newCache[emp.id] = storedPhoto;
+      } else if (emp.photo && emp.photo.startsWith('data:')) {
+        newCache[emp.id] = emp.photo;
+      } else {
+        newCache[emp.id] = null;
+      }
+    });
+    setPhotoCache(newCache);
+    
+    const toFetch = employeeList.filter(emp => !newCache[emp.id] && !emp.photo?.startsWith('data:'));
+    toFetch.forEach(emp => {
+      api.get(`/photos/employe/${emp.id}`, { responseType: 'blob' })
+        .then(response => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64 = reader.result;
+            if (base64.length < 80000) {
+              localStorage.setItem(`profilePhoto_${emp.id}`, base64);
+            }
+            setPhotoCache(prev => ({ ...prev, [emp.id]: base64 }));
+          };
+          reader.readAsDataURL(response.data);
+        })
+        .catch(() => {
+          setPhotoCache(prev => ({ ...prev, [emp.id]: 'default' }));
+        });
+    });
+  };
+
+  const getPhotoUrl = (employeId) => {
+    const cached = photoCache[employeId];
+    if (cached === 'default') {
+      const emp = employes.find(e => e.id === employeId);
+      return `${DEFAULT_AVATAR}&name=${emp?.prenom || ''}+${emp?.nom || ''}`;
+    }
+    if (cached) return cached;
+    const storedPhoto = localStorage.getItem(`profilePhoto_${employeId}`);
+    if (storedPhoto && (storedPhoto.startsWith('data:') || storedPhoto.startsWith('http'))) {
+      return storedPhoto;
+    }
+    const emp = employes.find(e => e.id === employeId);
+    if (emp?.photo && emp.photo.startsWith('data:')) {
+      return emp.photo;
+    }
+    return null;
+  };
+
+  const handlePhotoError = (e) => {
+    e.target.style.display = 'none';
+    e.target.nextSibling.style.display = 'flex';
+  };
 
   useEffect(() => {
     fetchData();
@@ -20,6 +78,7 @@ function AdminConges() {
       ]);
       setConges(congeRes.data || []);
       setEmployes(empRes.data || []);
+      preloadPhotos(empRes.data || []);
     } catch (error) {
       console.error('Erreur chargement:', error);
     } finally {
@@ -126,9 +185,26 @@ function AdminConges() {
             <div key={conge.id} className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6">
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
-                    {conge.employe?.prenom?.[0]}{conge.employe?.nom?.[0]}
-                  </div>
+                  {(() => {
+                    const photoUrl = getPhotoUrl(conge.employe_id);
+                    return (
+                      <>
+                        {photoUrl ? (
+                          <img 
+                            src={photoUrl} 
+                            alt="" 
+                            className="w-12 h-12 rounded-full object-cover"
+                            onError={handlePhotoError}
+                          />
+                        ) : null}
+                        <div 
+                          className={`w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold ${photoUrl ? 'hidden' : ''}`}
+                        >
+                          {conge.employe?.prenom?.[0]}{conge.employe?.nom?.[0]}
+                        </div>
+                      </>
+                    );
+                  })()}
                   <div>
                     <h3 className="text-white font-semibold text-lg">{getEmployeName(conge.employe_id)}</h3>
                     <p className="text-white/50 text-sm">{conge.employe?.matricule} - {conge.employe?.poste}</p>
