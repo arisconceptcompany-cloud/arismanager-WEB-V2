@@ -35,7 +35,11 @@ api.interceptors.response.use(
 export const authAPI = {
   login: (matricule, mot_de_passe) => api.post('/auth/login', { matricule, mot_de_passe }),
   logout: () => api.post('/auth/logout'),
-  checkAuth: () => api.get('/auth/check')
+  checkAuth: () => api.get('/auth/check'),
+  changePassword: (currentPassword, newPassword) => api.post('/auth/change-password', { 
+    current_password: currentPassword, 
+    new_password: newPassword 
+  })
 };
 
 export const employeAPI = {
