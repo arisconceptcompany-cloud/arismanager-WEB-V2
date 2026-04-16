@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Clock, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
-import api from '../../services/api';
+import api, { DEFAULT_AVATAR } from '../../services/api';
 
 function AdminPresences() {
   const [presences, setPresences] = useState([]);
@@ -8,6 +8,63 @@ function AdminPresences() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [photoCache, setPhotoCache] = useState({});
+
+  const preloadPhotos = (employeeList) => {
+    const newCache = {};
+    employeeList.forEach(emp => {
+      const storedPhoto = localStorage.getItem(`profilePhoto_${emp.id}`);
+      if (storedPhoto && (storedPhoto.startsWith('data:') || storedPhoto.startsWith('http'))) {
+        newCache[emp.id] = storedPhoto;
+      } else if (emp.photo && emp.photo.startsWith('data:')) {
+        newCache[emp.id] = emp.photo;
+        localStorage.setItem(`profilePhoto_${emp.id}`, emp.photo);
+      } else {
+        newCache[emp.id] = null;
+      }
+    });
+    setPhotoCache(newCache);
+    
+    const toFetch = employeeList.filter(emp => !newCache[emp.id] && !emp.photo?.startsWith('data:'));
+    toFetch.forEach(emp => {
+      api.get(`/photos/employe/${emp.id}`, { responseType: 'blob' })
+        .then(response => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64 = reader.result;
+            localStorage.setItem(`profilePhoto_${emp.id}`, base64);
+            setPhotoCache(prev => ({ ...prev, [emp.id]: base64 }));
+          };
+          reader.readAsDataURL(response.data);
+        })
+        .catch(() => {
+          setPhotoCache(prev => ({ ...prev, [emp.id]: 'default' }));
+        });
+    });
+  };
+
+  const getPhotoUrl = (employe) => {
+    const cached = photoCache[employe.id];
+    if (cached === 'default') {
+      return `${DEFAULT_AVATAR}&name=${employe.prenom || ''}+${employe.nom || ''}`;
+    }
+    if (cached) {
+      return cached;
+    }
+    const storedPhoto = localStorage.getItem(`profilePhoto_${employe.id}`);
+    if (storedPhoto && (storedPhoto.startsWith('data:') || storedPhoto.startsWith('http'))) {
+      return storedPhoto;
+    }
+    if (employe.photo && employe.photo.startsWith('data:')) {
+      return employe.photo;
+    }
+    return null;
+  };
+
+  const handlePhotoError = (e, employe) => {
+    e.target.style.display = 'none';
+    e.target.nextSibling.style.display = 'flex';
+  };
 
   useEffect(() => {
     fetchData();
@@ -25,6 +82,7 @@ function AdminPresences() {
       ]);
       setPresences(presenceRes.data || []);
       setEmployes(empRes.data || []);
+      preloadPhotos(empRes.data || []);
     } catch (error) {
       console.error('Erreur chargement:', error);
     } finally {
@@ -187,9 +245,26 @@ function AdminPresences() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                          {employe.prenom?.[0]}{employe.nom?.[0]}
-                        </div>
+                        {(() => {
+                          const photoUrl = getPhotoUrl(employe);
+                          return (
+                            <>
+                              {photoUrl ? (
+                                <img 
+                                  src={photoUrl} 
+                                  alt="" 
+                                  className="w-10 h-10 rounded-full object-cover"
+                                  onError={(e) => handlePhotoError(e, employe)}
+                                />
+                              ) : null}
+                              <div 
+                                className={`w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm ${photoUrl ? 'hidden' : ''}`}
+                              >
+                                {employe.prenom?.[0]}{employe.nom?.[0]}
+                              </div>
+                            </>
+                          );
+                        })()}
                         <div>
                           <p className="text-white font-medium">{employe.prenom} {employe.nom}</p>
                           <p className="text-white/50 text-sm">{employe.poste || '-'}</p>

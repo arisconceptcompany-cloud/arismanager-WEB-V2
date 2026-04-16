@@ -99,7 +99,16 @@ function App() {
         const response = await authAPI.checkAuth();
         setInitialUser(response.data.user);
       } catch (error) {
-        setInitialUser(null);
+        const savedUser = localStorage.getItem('user');
+        if (savedUser) {
+          try {
+            setInitialUser(JSON.parse(savedUser));
+          } catch (e) {
+            setInitialUser(null);
+          }
+        } else {
+          setInitialUser(null);
+        }
       } finally {
         setLoading(false);
       }
