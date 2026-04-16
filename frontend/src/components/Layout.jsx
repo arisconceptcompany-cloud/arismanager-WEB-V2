@@ -10,6 +10,13 @@ import { useUser } from '../context/UserContext';
 function Layout({ user, children }) {
   const navigate = useNavigate();
   const { profilePhoto, getAvatarUrl, handlePhotoError, photoError } = useUser();
+
+  const getSidebarPhoto = () => {
+    if (profilePhoto && profilePhoto.startsWith('data:')) {
+      return profilePhoto;
+    }
+    return getAvatarUrl();
+  };
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifCount, setNotifCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
@@ -144,9 +151,10 @@ function Layout({ user, children }) {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
               <img 
-                src={profilePhoto} 
+                src={getSidebarPhoto()} 
                 alt="Profil" 
                 className="w-10 h-10 lg:w-12 lg:h-12 rounded-full object-cover border-2 border-blue-400"
+                onError={handlePhotoError}
               />
               <div className="lg:block">
                 <h2 className="text-white font-semibold text-sm lg:text-base">{user?.prenom} {user?.nom}</h2>

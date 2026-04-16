@@ -11,7 +11,14 @@ import api from '../services/api';
 
 function AdminLayout({ user, children }) {
   const navigate = useNavigate();
-  const { profilePhoto } = useUser();
+  const { profilePhoto, getAvatarUrl, handlePhotoError } = useUser();
+
+  const getSidebarPhoto = () => {
+    if (profilePhoto && profilePhoto.startsWith('data:')) {
+      return profilePhoto;
+    }
+    return getAvatarUrl();
+  };
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifCount, setNotifCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
@@ -227,17 +234,12 @@ function AdminLayout({ user, children }) {
         <div className="p-4 xl:p-6 border-b border-white/20">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              {profilePhoto ? (
-                <img 
-                  src={profilePhoto} 
-                  alt="Profil" 
-                  className="w-10 h-10 xl:w-12 xl:h-12 rounded-full object-cover border-2 border-red-400"
-                />
-              ) : (
-                <div className="w-10 h-10 xl:w-12 xl:h-12 bg-gradient-to-br from-red-500 to-orange-600 rounded-full flex items-center justify-center text-white font-bold border-2 border-red-400">
-                  {getInitials(user?.nom, user?.prenom)}
-                </div>
-              )}
+              <img 
+                src={getSidebarPhoto()} 
+                alt="Profil" 
+                className="w-10 h-10 xl:w-12 xl:h-12 rounded-full object-cover border-2 border-red-400"
+                onError={handlePhotoError}
+              />
               <div className="hidden sm:block">
                 <h2 className="text-white font-semibold text-sm xl:text-base">{user?.prenom} {user?.nom}</h2>
                 <p className="text-xs text-red-400 font-medium flex items-center gap-1">

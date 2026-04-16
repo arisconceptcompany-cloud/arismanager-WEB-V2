@@ -55,31 +55,36 @@ function AdminEmployes() {
   };
 
   const preloadPhotos = (employeeList) => {
-    const cache = {};
+    const newCache = {};
     employeeList.forEach(emp => {
       const storedPhoto = localStorage.getItem(`profilePhoto_${emp.id}`);
       if (storedPhoto && (storedPhoto.startsWith('data:') || storedPhoto.startsWith('http'))) {
-        cache[emp.id] = storedPhoto;
+        newCache[emp.id] = storedPhoto;
       } else if (emp.photo && emp.photo.startsWith('data:')) {
-        cache[emp.id] = emp.photo;
+        newCache[emp.id] = emp.photo;
+        localStorage.setItem(`profilePhoto_${emp.id}`, emp.photo);
       } else {
-        cache[emp.id] = 'load';
-        api.get(`/photos/employe/${emp.id}`, { responseType: 'blob' })
-          .then(response => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              const base64 = reader.result;
-              localStorage.setItem(`profilePhoto_${emp.id}`, base64);
-              setPhotoCache(prev => ({ ...prev, [emp.id]: base64 }));
-            };
-            reader.readAsDataURL(response.data);
-          })
-          .catch(() => {
-            setPhotoCache(prev => ({ ...prev, [emp.id]: 'default' }));
-          });
+        newCache[emp.id] = null;
       }
     });
-    setPhotoCache(prev => ({ ...prev, ...cache }));
+    setPhotoCache(newCache);
+    
+    const toFetch = employeeList.filter(emp => !newCache[emp.id] && !emp.photo?.startsWith('data:'));
+    toFetch.forEach(emp => {
+      api.get(`/photos/employe/${emp.id}`, { responseType: 'blob' })
+        .then(response => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64 = reader.result;
+            localStorage.setItem(`profilePhoto_${emp.id}`, base64);
+            setPhotoCache(prev => ({ ...prev, [emp.id]: base64 }));
+          };
+          reader.readAsDataURL(response.data);
+        })
+        .catch(() => {
+          setPhotoCache(prev => ({ ...prev, [emp.id]: 'default' }));
+        });
+    });
   };
 
   const openAddModal = () => {
@@ -180,8 +185,11 @@ function AdminEmployes() {
 
   const getPhotoUrl = (employe) => {
     const cached = photoCache[employe.id];
-    if (cached && cached !== 'load') {
-      return cached === 'default' ? getDefaultAvatar(employe) : cached;
+    if (cached === 'default') {
+      return getDefaultAvatar(employe);
+    }
+    if (cached) {
+      return cached;
     }
     const storedPhoto = localStorage.getItem(`profilePhoto_${employe.id}`);
     if (storedPhoto && (storedPhoto.startsWith('data:') || storedPhoto.startsWith('http'))) {

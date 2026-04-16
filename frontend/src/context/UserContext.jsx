@@ -17,40 +17,36 @@ export const UserProvider = ({ children, initialUser }) => {
     if (initialUser) {
       setUser(initialUser);
       setPhotoError(false);
-      setPhotoLoading(true);
       
       const userId = initialUser.id;
       
-      // First check localStorage
       const savedPhoto = localStorage.getItem(`profilePhoto_${userId}`);
       
       if (savedPhoto && savedPhoto !== 'null' && savedPhoto !== 'undefined' && savedPhoto.length < 500000) {
         if (savedPhoto.startsWith('data:') || savedPhoto.startsWith('http')) {
           setProfilePhoto(savedPhoto);
-          setPhotoLoading(false);
           return;
         }
       }
       
-      // Clear invalid localStorage
       if (savedPhoto && savedPhoto.length > 500000) {
         localStorage.removeItem(`profilePhoto_${userId}`);
       }
       
-      // Try to load from API with Axios
       api.get(`/photos/employe/${userId}`, { responseType: 'blob' })
         .then(response => {
           const reader = new FileReader();
           reader.onloadend = () => {
-            setProfilePhoto(reader.result);
-            setPhotoLoading(false);
+            const base64 = reader.result;
+            setProfilePhoto(base64);
+            if (base64.length < 1000000) {
+              localStorage.setItem(`profilePhoto_${userId}`, base64);
+            }
           };
           reader.readAsDataURL(response.data);
         })
         .catch(() => {
-          setProfilePhoto(`${DEFAULT_AVATAR}&name=${initialUser?.prenom || ''}+${initialUser?.nom || ''}`);
           setPhotoError(true);
-          setPhotoLoading(false);
         });
     }
   }, [initialUser]);
