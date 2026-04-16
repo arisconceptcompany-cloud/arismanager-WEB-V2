@@ -1,0 +1,300 @@
+import { useState, useEffect } from 'react';
+import { Clock, CheckCircle, TrendingUp, RefreshCw } from 'lucide-react';
+import api, { pointageAPI } from '../services/api';
+
+function Pointages() {
+  const [pointages, setPointages] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const [pointagesRes, statsRes] = await Promise.all([
+        pointageAPI.getPointages(),
+        pointageAPI.getStats(new Date().getFullYear())
+      ]);
+      setPointages(pointagesRes.data || []);
+      setStats(statsRes.data || []);
+    } catch (error) {
+      console.error('Erreur chargement pointages:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      await api.get('/sync');
+      await fetchData();
+    } catch (error) {
+      console.error('Erreur sync:', error);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const formatTime = (time) => time ? time.substring(0, 5) : '-';
+
+  const calculerHeuresTravail = (heureArrivee, heureDepart) => {
+    if (!heureArrivee || !heureDepart) return '-';
+    const [h1, m1] = heureArrivee.split(':').map(Number);
+    const [h2, m2] = heureDepart.split(':').map(Number);
+    const totalMinutes = (h2 * 60 + m2) - (h1 * 60 + m1);
+    const heures = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    return `${heures}h ${minutes}m`;
+  };
+
+  const calculerRetard = (heureArrivee) => {
+    if (!heureArrivee) return { estRetard: false, retard: '-' };
+    const [h, m] = heureArrivee.split(':').map(Number);
+    const heureArriveeMinutes = h * 60 + m;
+    const heureLimite = 8 * 60;
+    const retardMinutes = heureArriveeMinutes - heureLimite;
+    if (retardMinutes > 0) {
+      const heures = Math.floor(retardMinutes / 60);
+      const minutes = retardMinutes % 60;
+      return { 
+        estRetard: true, 
+        retard: heures > 0 ? `${heures}h ${minutes}m` : `${minutes}m` 
+      };
+    }
+    return { estRetard: false, retard: '-' };
+  };
+
+  const totalJours = stats?.reduce((acc, s) => acc + s.total_jours, 0) || 0;
+  const totalPresents = stats?.reduce((acc, s) => acc + s.jours_present, 0) || 0;
+  const totalRetards = stats?.reduce((acc, s) => acc + s.jours_retard, 0) || 0;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <p className="text-white bg-black/50 px-4 py-2 rounded-lg">Chargement...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-white mb-2">Mes Pointages</h1>
+          <p className="text-white/70">Historique de vos heures de travail (Horaire: 8h00 - 17h00)</p>
+        </div>
+        <button
+          onClick={handleSync}
+          disabled={syncing}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg transition-colors"
+        >
+          <RefreshCw size={18} className={syncing ? 'animate-spin' : ''} />
+          {syncing ? 'Sync...' : 'Sync'}
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
+              <CheckCircle className="text-green-400" size={24} />
+            </div>
+            <div>
+              <h3 className="text-sm text-white/70">Jours présents</h3>
+              <div className="text-3xl font-bold text-white">{totalPresents}</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center">
+              <Clock className="text-red-400" size={24} />
+            </div>
+            <div>
+              <h3 className="text-sm text-white/70">Jours de retard</h3>
+              <div className="text-3xl font-bold text-white">{totalRetards}</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
+              <TrendingUp className="text-blue-400" size={24} />
+            </div>
+            <div>
+              <h3 className="text-sm text-white/70">Taux de présence</h3>
+              <div className="text-3xl font-bold text-white">
+                {totalJours > 0 ? ((totalPresents / totalJours) * 100).toFixed(1) : 0}%
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
+              <Clock className="text-purple-400" size={24} />
+            </div>
+            <div>
+              <h3 className="text-sm text-white/70">Total pointages</h3>
+              <div className="text-3xl font-bold text-white">{pointages.length}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden">
+        <div className="p-6 border-b border-white/20">
+          <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+            <Clock size={24} />
+            Historique des pointages
+          </h2>
+        </div>
+
+        {pointages.length === 0 ? (
+          <div className="p-12 text-center">
+            <Clock size={64} className="mx-auto text-white/30 mb-4" />
+            <h3 className="text-lg font-semibold text-white mb-2">Aucun pointage</h3>
+            <p className="text-white/60">Vos pointages apparaîtront ici automatiquement</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-black/30">
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-white/70 uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-4 text-center text-xs font-semibold text-white/70 uppercase tracking-wider">Entrée</th>
+                  <th className="px-6 py-4 text-center text-xs font-semibold text-white/70 uppercase tracking-wider">Sortie</th>
+                  <th className="px-6 py-4 text-center text-xs font-semibold text-white/70 uppercase tracking-wider">Retard</th>
+                  <th className="px-6 py-4 text-center text-xs font-semibold text-white/70 uppercase tracking-wider">Total Travail</th>
+                  <th className="px-6 py-4 text-center text-xs font-semibold text-white/70 uppercase tracking-wider">Statut</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/10">
+                {pointages.map((pointage) => {
+                  const { estRetard, retard } = calculerRetard(pointage.heure_arrivee);
+                  const totalTravail = calculerHeuresTravail(pointage.heure_arrivee, pointage.heure_depart);
+                  
+                  return (
+                    <tr key={pointage.id} className="hover:bg-white/5 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-white font-medium">
+                          {(() => {
+                            const [y, m, d] = pointage.date.split('-');
+                            const date = new Date(y, m - 1, d);
+                            return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+                          })()}
+                        </div>
+                        <div className="text-xs text-white/50 capitalize">
+                          {(() => {
+                            const [y, m, d] = pointage.date.split('-');
+                            const date = new Date(y, m - 1, d);
+                            return date.toLocaleDateString('fr-FR', { weekday: 'long' });
+                          })()}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold ${
+                          estRetard 
+                            ? 'bg-amber-500/20 text-amber-400' 
+                            : 'bg-green-500/20 text-green-400'
+                        }`}>
+                          {pointage.heure_arrivee ? (
+                            <>
+                              <Clock size={16} />
+                              {formatTime(pointage.heure_arrivee)}
+                            </>
+                          ) : (
+                            <span className="text-white/50">-</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-white/10 text-white">
+                          {pointage.heure_depart ? (
+                            <>
+                              <Clock size={16} />
+                              {formatTime(pointage.heure_depart)}
+                            </>
+                          ) : (
+                            <span className="text-white/50">-</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        {estRetard ? (
+                          <span className="inline-flex items-center gap-1 px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-sm font-semibold">
+                            +{retard}
+                          </span>
+                        ) : (
+                          <span className="text-green-400 text-sm font-medium">À l'heure</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500/20 text-purple-300 rounded-lg text-sm font-semibold">
+                          {totalTravail !== '-' && <Clock size={16} />}
+                          {totalTravail}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className={`px-4 py-2 rounded-full text-xs font-bold uppercase ${
+                          pointage.statut === 'present' ? 'bg-green-500/20 text-green-400' :
+                          pointage.statut === 'retard' ? 'bg-amber-500/20 text-amber-400' :
+                          pointage.statut === 'absent' ? 'bg-red-500/20 text-red-400' :
+                          'bg-blue-500/20 text-blue-400'
+                        }`}>
+                          {pointage.statut}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-6 bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
+        <h3 className="text-lg font-semibold text-white mb-4">Légende des horaires</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
+              <Clock size={20} className="text-green-400" />
+            </div>
+            <div>
+              <div className="text-white font-medium">Entrée normale</div>
+              <div className="text-white/50 text-sm">Avant 8h00</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-amber-500/20 rounded-lg flex items-center justify-center">
+              <Clock size={20} className="text-amber-400" />
+            </div>
+            <div>
+              <div className="text-white font-medium">Entrée en retard</div>
+              <div className="text-white/50 text-sm">Après 8h00</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center">
+              <Clock size={20} className="text-purple-400" />
+            </div>
+            <div>
+              <div className="text-white font-medium">Heures de travail</div>
+              <div className="text-white/50 text-sm">8h00 - 17h00 (9h/jour)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default Pointages;
