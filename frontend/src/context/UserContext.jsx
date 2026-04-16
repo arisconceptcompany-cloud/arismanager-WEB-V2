@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import api, { photoAPI, DEFAULT_AVATAR } from '../services/api';
+import api, { DEFAULT_AVATAR } from '../services/api';
 
 const UserContext = createContext();
 
@@ -37,24 +37,17 @@ export const UserProvider = ({ children, initialUser }) => {
         localStorage.removeItem(`profilePhoto_${userId}`);
       }
       
-      // Try to load from API
-      fetch(`https://apiv2.aris-cc.com/api/photos/employe/${userId}`, { credentials: 'include' })
-        .then(res => {
-          if (res.ok) {
-            return res.blob();
-          }
-          throw new Error('No photo');
-        })
-        .then(blob => {
+      // Try to load from API with Axios
+      api.get(`/photos/employe/${userId}`, { responseType: 'blob' })
+        .then(response => {
           const reader = new FileReader();
           reader.onloadend = () => {
             setProfilePhoto(reader.result);
             setPhotoLoading(false);
           };
-          reader.readAsDataURL(blob);
+          reader.readAsDataURL(response.data);
         })
         .catch(() => {
-          // Use default avatar
           setProfilePhoto(`${DEFAULT_AVATAR}&name=${initialUser?.prenom || ''}+${initialUser?.nom || ''}`);
           setPhotoError(true);
           setPhotoLoading(false);

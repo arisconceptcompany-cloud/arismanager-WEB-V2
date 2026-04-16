@@ -11,6 +11,7 @@ function AdminEmployes() {
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedEmploye, setSelectedEmploye] = useState(null);
   const [editingEmploye, setEditingEmploye] = useState(null);
+  const [photoCache, setPhotoCache] = useState({});
   const [formData, setFormData] = useState({
     matricule: '',
     nom: '',
@@ -22,7 +23,9 @@ function AdminEmployes() {
     telephone: '',
     adresse: '',
     date_embauche: '',
-    role: 'employe'
+    role: 'employe',
+    num_cin: '',
+    num_cnaps: ''
   });
 
   useEffect(() => {
@@ -43,11 +46,40 @@ function AdminEmployes() {
       const res = await api.get('/admin/employes');
       setEmployes(res.data);
       setFilteredEmployes(res.data);
+      preloadPhotos(res.data);
     } catch (error) {
       console.error('Erreur chargement employés:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const preloadPhotos = (employeeList) => {
+    const cache = {};
+    employeeList.forEach(emp => {
+      const storedPhoto = localStorage.getItem(`profilePhoto_${emp.id}`);
+      if (storedPhoto && (storedPhoto.startsWith('data:') || storedPhoto.startsWith('http'))) {
+        cache[emp.id] = storedPhoto;
+      } else if (emp.photo && emp.photo.startsWith('data:')) {
+        cache[emp.id] = emp.photo;
+      } else {
+        cache[emp.id] = 'load';
+        api.get(`/photos/employe/${emp.id}`, { responseType: 'blob' })
+          .then(response => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const base64 = reader.result;
+              localStorage.setItem(`profilePhoto_${emp.id}`, base64);
+              setPhotoCache(prev => ({ ...prev, [emp.id]: base64 }));
+            };
+            reader.readAsDataURL(response.data);
+          })
+          .catch(() => {
+            setPhotoCache(prev => ({ ...prev, [emp.id]: 'default' }));
+          });
+      }
+    });
+    setPhotoCache(prev => ({ ...prev, ...cache }));
   };
 
   const openAddModal = () => {
@@ -63,7 +95,9 @@ function AdminEmployes() {
       telephone: '',
       adresse: '',
       date_embauche: '',
-      role: 'employe'
+      role: 'employe',
+      num_cin: '',
+      num_cnaps: ''
     });
     setShowModal(true);
   };
@@ -81,7 +115,9 @@ function AdminEmployes() {
       telephone: employe.telephone || '',
       adresse: employe.adresse || '',
       date_embauche: employe.date_embauche || '',
-      role: employe.role || 'employe'
+      role: employe.role || 'employe',
+      num_cin: employe.num_cin || '',
+      num_cnaps: employe.num_cnaps || ''
     });
     setShowModal(true);
   };
@@ -143,19 +179,18 @@ function AdminEmployes() {
   const getDefaultAvatar = (employe) => `${DEFAULT_AVATAR}&name=${employe.prenom || ''}+${employe.nom || ''}`;
 
   const getPhotoUrl = (employe) => {
+    const cached = photoCache[employe.id];
+    if (cached && cached !== 'load') {
+      return cached === 'default' ? getDefaultAvatar(employe) : cached;
+    }
     const storedPhoto = localStorage.getItem(`profilePhoto_${employe.id}`);
     if (storedPhoto && (storedPhoto.startsWith('data:') || storedPhoto.startsWith('http'))) {
       return storedPhoto;
     }
-    if (employe.photo) {
-      if (employe.photo.startsWith('data:') || employe.photo.startsWith('/')) {
-        return employe.photo.startsWith('/') 
-          ? `http://167.86.118.96:3002${employe.photo}` 
-          : employe.photo;
-      }
-      return `http://167.86.118.96:3002/api/photos/employe/${employe.id}`;
+    if (employe.photo && employe.photo.startsWith('data:')) {
+      return employe.photo;
     }
-    return getDefaultAvatar(employe);
+    return null;
   };
 
   const handlePhotoError = (e) => {
@@ -228,6 +263,7 @@ function AdminEmployes() {
                           data-prenom={emp.prenom}
                           data-nom={emp.nom}
                           onError={handlePhotoError}
+                          loading="lazy"
                         />
                       ) : (
                         <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
@@ -390,12 +426,34 @@ function AdminEmployes() {
                   />
                 </div>
                 <div>
+                  <label className="block text-white/50 text-sm mb-1">N° CIN</label>
+                  <input
+                    type="text"
+                    value={formData.num_cin}
+                    onChange={(e) => setFormData({ ...formData, num_cin: e.target.value })}
+                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-red-500"
+                    placeholder="N° CIN"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
                   <label className="block text-white/50 text-sm mb-1">Date d'embauche</label>
                   <input
                     type="date"
                     value={formData.date_embauche}
                     onChange={(e) => setFormData({ ...formData, date_embauche: e.target.value })}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-red-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-white/50 text-sm mb-1">N° CNAPS</label>
+                  <input
+                    type="text"
+                    value={formData.num_cnaps}
+                    onChange={(e) => setFormData({ ...formData, num_cnaps: e.target.value })}
+                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-red-500"
+                    placeholder="N° CNAPS"
                   />
                 </div>
               </div>
@@ -472,6 +530,14 @@ function AdminEmployes() {
                 <div className="flex items-center gap-3 text-white/70">
                   <Calendar size={18} />
                   <span>{selectedEmploye.date_embauche ? new Date(selectedEmploye.date_embauche).toLocaleDateString('fr-FR') : '-'}</span>
+                </div>
+                <div className="flex items-center gap-3 text-white/70">
+                  <User size={18} />
+                  <span>{selectedEmploye.num_cin || '-'}</span>
+                </div>
+                <div className="flex items-center gap-3 text-white/70">
+                  <Shield size={18} />
+                  <span>{selectedEmploye.num_cnaps || '-'}</span>
                 </div>
               </div>
             </div>
