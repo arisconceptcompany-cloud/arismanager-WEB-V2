@@ -1,4 +1,4 @@
-const API_URL = 'http://167.86.118.96:3002/api';
+const API_URL = 'https://apiv2.aris-cc.com/api';
 
 export const API_ENDPOINTS = {
   auth: {
