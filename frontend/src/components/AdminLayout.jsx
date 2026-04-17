@@ -245,8 +245,8 @@ function AdminLayout({ user, children }) {
 
   return (
     <div className="flex min-h-screen">
-      <aside className="w-64 min-h-screen bg-slate-900 border-r border-white/20 flex flex-col">
-        <div className="p-6 border-b border-white/20">
+      <aside style={{ width: '260px', minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#0f172a', borderRight: '1px solid rgba(255,255,255,0.2)', position: 'fixed', left: 0, top: 0 }}>
+        <div style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.2)' }}>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
               {profilePhoto ? (
@@ -539,8 +539,8 @@ function AdminLayout({ user, children }) {
         </div>
       </aside>
 
-      <main className="flex-1 min-h-screen">
-        <div className="p-6">
+      <main style={{ marginLeft: '260px', flex: 1, minHeight: '100vh' }}>
+        <div style={{ padding: '1.5rem' }}>
           {children}
         </div>
       </main>
