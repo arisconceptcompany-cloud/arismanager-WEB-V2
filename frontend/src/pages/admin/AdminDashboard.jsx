@@ -12,6 +12,8 @@ function AdminDashboard() {
     totalEmployes: 0,
     pendingConges: 0,
     enCoursProjects: 0,
+    totalProjects: 0,
+    enAttenteProjects: 0,
     pendingRapports: 0
   });
 
@@ -26,7 +28,7 @@ function AdminDashboard() {
         api.get('/admin/employes'),
         pointageAPI.getPointages({ year }),
         congeAPI.getConges(),
-        projetAPI.getAllProjets(),
+        projetAPI.getAdminProjets(),
         rapportAPI.getRapports()
       ]);
       
@@ -35,11 +37,13 @@ function AdminDashboard() {
       setStats({
         totalEmployes: (employeRes.data || []).length,
         pendingConges: (congeRes.data || []).filter(c => c.statut === 'en_attente').length,
+        totalProjects: (projetRes.data || []).length,
         enCoursProjects: (projetRes.data || []).filter(p => p.statut === 'en_cours').length,
+        enAttenteProjects: (projetRes.data || []).reduce((sum, p) => sum + (parseInt(p.nb_en_attente) || 0), 0),
         pendingRapports: (rapportRes.data || []).filter(r => r.statut === 'soumis').length
       });
     } catch (error) {
-      console.error('Erreur chargement données:', error);
+      console.error('Erreur chargement donnees:', error);
     }
   };
 
@@ -122,7 +126,7 @@ function AdminDashboard() {
       <h1 className="text-3xl font-bold text-white mb-2">Tableau de bord Admin</h1>
       <p className="text-white/70 mb-6">Bienvenue, {user?.prenom} {user?.nom}</p>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
         <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -144,10 +148,19 @@ function AdminDashboard() {
         <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white/50 text-sm">Projets en cours</p>
-              <p className="text-3xl font-bold text-green-400">{stats.enCoursProjects}</p>
+              <p className="text-white/50 text-sm">Total Projets</p>
+              <p className="text-3xl font-bold text-blue-400">{stats.totalProjects}</p>
             </div>
-            <FolderKanban size={40} className="text-green-400 opacity-50" />
+            <FolderKanban size={40} className="text-blue-400 opacity-50" />
+          </div>
+        </div>
+        <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-white/50 text-sm">En attente réponse</p>
+              <p className="text-3xl font-bold text-amber-400">{stats.enAttenteProjects}</p>
+            </div>
+            <Clock size={40} className="text-amber-400 opacity-50" />
           </div>
         </div>
         <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6">

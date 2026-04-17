@@ -213,6 +213,7 @@ function AdminLayout({ user, children }) {
   });
 
   const [pendingConges, setPendingConges] = useState(0);
+  const [projetNotifCount, setProjetNotifCount] = useState(0);
 
   useEffect(() => {
     const fetchPendingConges = async () => {
@@ -228,14 +229,31 @@ function AdminLayout({ user, children }) {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const fetchProjetNotifications = async () => {
+      try {
+        const res = await notificationAPI.getNotifications();
+        const projetNotifs = (res.data || []).filter(n => 
+          n.type === 'projet_attribue' || n.type === 'projet_reponse'
+        );
+        setProjetNotifCount(projetNotifs.length);
+      } catch (error) {
+        console.error('Erreur projet notifications:', error);
+      }
+    };
+    fetchProjetNotifications();
+    const interval = setInterval(fetchProjetNotifications, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   const menuItems = [
     { path: '/admin', icon: LayoutDashboard, label: 'Tableau de bord' },
     { path: '/admin/profile', icon: User, label: 'Mon profile' },
     { path: '/admin/employes', icon: Users, label: 'Employés' },
     { path: '/admin/presences', icon: Clock, label: 'Présences' },
-    { path: '/admin/projets', icon: FolderKanban, label: 'Projets' },
+    { path: '/admin/projets', icon: FolderKanban, label: 'Projets', badge: projetNotifCount },
     { path: '/admin/salaires', icon: DollarSign, label: 'Salaires' },
-    { path: '/admin/conges', icon: Calendar, label: 'Congés', badge: pendingConges + notifCount },
+    { path: '/admin/conges', icon: Calendar, label: 'Congés', badge: pendingConges },
     { path: '/admin/rapports', icon: FileText, label: 'Rapports' },
     { path: '/admin/badges', icon: Shield, label: 'Badges' },
   ];

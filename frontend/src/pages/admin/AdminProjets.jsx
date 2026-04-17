@@ -11,6 +11,7 @@ function AdminProjets() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [expandedProjets, setExpandedProjets] = useState({});
+  const [expandedEmployes, setExpandedEmployes] = useState({});
   const [newProjet, setNewProjet] = useState({
     titre: '',
     description: '',
@@ -98,10 +99,34 @@ function AdminProjets() {
     setShowDetailModal(true);
   };
 
-  const toggleExpand = (projetId) => {
+  const toggleExpand = async (projetId) => {
+    if (!expandedProjets[projetId]) {
+      await fetchApprobationsForProjet(projetId);
+    }
     setExpandedProjets(prev => ({
       ...prev,
       [projetId]: !prev[projetId]
+    }));
+  };
+
+  const [projetApprobations, setProjetApprobations] = useState({});
+
+  const fetchApprobationsForProjet = async (projetId) => {
+    try {
+      const response = await projetAPI.getApprovations(projetId);
+      setProjetApprobations(prev => ({
+        ...prev,
+        [projetId]: response.data
+      }));
+    } catch (error) {
+      console.error('Erreur chargement approbations:', error);
+    }
+  };
+
+  const toggleEmployeExpand = (projetId, empId) => {
+    setExpandedEmployes(prev => ({
+      ...prev,
+      [`${projetId}-${empId}`]: !prev[`${projetId}-${empId}`]
     }));
   };
 
@@ -303,7 +328,7 @@ function AdminProjets() {
                 {expandedProjets[projet.id] && (
                   <div className="border-t border-white/10 p-5 bg-black/20">
                     <div className="flex justify-between items-center mb-4">
-                      <h4 className="text-white font-medium">Reponses des employes</h4>
+                      <h4 className="text-white font-medium">Reponses des employes ({projetApprobations[projet.id]?.length || 0})</h4>
                       <button
                         onClick={() => setAddingEmployes({ projet_id: projet.id, employe_ids: [], role_projet: 'Membre' })}
                         className="flex items-center gap-2 px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded-lg text-sm transition-colors"
@@ -312,21 +337,42 @@ function AdminProjets() {
                         Ajouter employe
                       </button>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {projets.find(p => p.id === projet.id)?.employes?.map(emp => (
-                        <div key={emp.id} className="bg-white/5 rounded-lg p-3 flex items-center gap-3">
-                          <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-                            {emp.prenom?.[0]}{emp.nom?.[0]}
+                    <div className="space-y-3">
+                      {(projetApprobations[projet.id] || []).map(emp => (
+                        <div key={emp.employe_id} className="bg-white/5 rounded-lg overflow-hidden">
+                          <div 
+                            className="p-3 flex items-center gap-3 cursor-pointer hover:bg-white/5"
+                            onClick={() => toggleEmployeExpand(projet.id, emp.employe_id)}
+                          >
+                            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                              {emp.prenom?.[0]}{emp.nom?.[0]}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-white font-medium">{emp.prenom} {emp.nom}</p>
+                              <p className="text-xs text-white/50">{emp.poste} - {emp.role_projet}</p>
+                            </div>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getApprobationBadge(emp.statut || 'en_attente')}`}>
+                              {getApprobationLabel(emp.statut || 'en_attente')}
+                            </span>
+                            {emp.commentaire && (
+                              <ChevronDown size={16} className="text-white/50" />
+                            )}
                           </div>
-                          <div className="flex-1">
-                            <p className="text-white font-medium">{emp.prenom} {emp.nom}</p>
-                            <p className="text-xs text-white/50">{emp.poste}</p>
-                          </div>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getApprobationBadge(emp.approbation_statut || 'en_attente')}`}>
-                            {getApprobationLabel(emp.approbation_statut || 'en_attente')}
-                          </span>
+                          {emp.commentaire && expandedEmployes[`${projet.id}-${emp.employe_id}`] && (
+                            <div className="px-4 pb-3 pt-1 border-t border-white/10">
+                              <p className="text-sm text-white/70 italic">"{emp.commentaire}"</p>
+                              {emp.date_reponse && (
+                                <p className="text-xs text-white/40 mt-1">
+                                  Repondu le: {new Date(emp.date_reponse).toLocaleDateString('fr-FR')} a {new Date(emp.date_reponse).toLocaleTimeString('fr-FR')}
+                                </p>
+                              )}
+                            </div>
+                          )}
                         </div>
                       ))}
+                      {(!projetApprobations[projet.id] || projetApprobations[projet.id].length === 0) && (
+                        <p className="text-white/50 text-center py-4">Aucun employe assigne</p>
+                      )}
                     </div>
                   </div>
                 )}
