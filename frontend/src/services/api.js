@@ -63,8 +63,13 @@ export const congeAPI = {
 export const projetAPI = {
   getProjets: () => api.get('/projets'),
   getAllProjets: () => api.get('/projets/all'),
+  getAdminProjets: () => api.get('/projets/admin'),
   getProjetById: (id) => api.get(`/projets/${id}`),
-  createProjet: (data) => api.post('/projets', data)
+  createProjet: (data) => api.post('/projets', data),
+  getEmployes: () => api.get('/projets/employes'),
+  assignEmployes: (data) => api.post('/projets/assign', data),
+  respondToProjet: (id, data) => api.post(`/projets/${id}/reponse`, data),
+  getApprovations: (id) => api.get(`/projets/${id}/approbations`)
 };
 
 export const fichierAPI = {

@@ -122,7 +122,9 @@ function Layout({ user, children }) {
     const icons = {
       conge_approuve: <Check className="w-4 h-4 text-green-400" />,
       conge_rejete: <X className="w-4 h-4 text-red-400" />,
-      conge_demande: <Bell className="w-4 h-4 text-blue-400" />
+      conge_demande: <Bell className="w-4 h-4 text-blue-400" />,
+      projet_attribue: <FolderKanban className="w-4 h-4 text-blue-400" />,
+      projet_reponse: <Bell className="w-4 h-4 text-amber-400" />
     };
     return icons[type] || <Bell className="w-4 h-4 text-gray-400" />;
   };

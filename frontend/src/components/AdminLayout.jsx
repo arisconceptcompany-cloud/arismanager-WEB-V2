@@ -233,6 +233,7 @@ function AdminLayout({ user, children }) {
     { path: '/admin/profile', icon: User, label: 'Mon profile' },
     { path: '/admin/employes', icon: Users, label: 'Employés' },
     { path: '/admin/presences', icon: Clock, label: 'Présences' },
+    { path: '/admin/projets', icon: FolderKanban, label: 'Projets' },
     { path: '/admin/salaires', icon: DollarSign, label: 'Salaires' },
     { path: '/admin/conges', icon: Calendar, label: 'Congés', badge: pendingConges + notifCount },
     { path: '/admin/rapports', icon: FileText, label: 'Rapports' },

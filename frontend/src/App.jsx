@@ -22,6 +22,7 @@ import AdminRapports from './pages/admin/AdminRapports';
 import AdminBadges from './pages/admin/AdminBadges';
 import AdminLayout from './components/AdminLayout';
 import AdminChat from './pages/admin/AdminChat';
+import AdminProjets from './pages/admin/AdminProjets';
 import './App.css';
 
 function AppContent() {
@@ -63,6 +64,7 @@ function AppContent() {
           <Route path="/admin/profile" element={<AdminLayout user={user}><Profile /></AdminLayout>} />
           <Route path="/admin/employes" element={<AdminLayout user={user}><AdminEmployes /></AdminLayout>} />
           <Route path="/admin/presences" element={<AdminLayout user={user}><AdminPresences /></AdminLayout>} />
+          <Route path="/admin/projets" element={<AdminLayout user={user}><AdminProjets /></AdminLayout>} />
           <Route path="/admin/salaires" element={<AdminLayout user={user}><AdminSalaires /></AdminLayout>} />
           <Route path="/admin/conges" element={<AdminLayout user={user}><AdminConges /></AdminLayout>} />
           <Route path="/admin/rapports" element={<AdminLayout user={user}><AdminRapports /></AdminLayout>} />
