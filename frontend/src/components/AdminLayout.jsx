@@ -261,28 +261,28 @@ function AdminLayout({ user, children }) {
     <div className="flex min-h-screen">
       {sidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/60 z-40 xl:hidden"
+          className="fixed inset-0 bg-black/60 z-40 lg:hidden"
           onClick={closeSidebar}
         />
       )}
 
-      <aside className={`fixed xl:static inset-y-0 left-0 z-50 w-64 bg-slate-900/95 xl:bg-gradient-to-b xl:from-slate-900 xl:to-slate-800 backdrop-blur-md border-r border-white/20 flex flex-col transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full xl:translate-x-0'} xl:block fixed h-screen`}>
-        <div className="p-4 xl:p-6 border-b border-white/20">
+      <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-slate-900/95 lg:bg-gradient-to-b lg:from-slate-900 lg:to-slate-800 backdrop-blur-md border-r border-white/20 flex flex-col transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} lg:block fixed h-screen`}>
+        <div className="p-4 lg:p-6 border-b border-white/20">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
               {profilePhoto ? (
                 <img 
                   src={profilePhoto} 
                   alt="Profil" 
-                  className="w-10 h-10 xl:w-12 xl:h-12 rounded-full object-cover border-2 border-red-400"
+                  className="w-10 h-10 lg:w-12 lg:h-12 rounded-full object-cover border-2 border-red-400"
                 />
               ) : (
-                <div className="w-10 h-10 xl:w-12 xl:h-12 bg-gradient-to-br from-red-500 to-orange-600 rounded-full flex items-center justify-center text-white font-bold border-2 border-red-400">
+                <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-red-500 to-orange-600 rounded-full flex items-center justify-center text-white font-bold border-2 border-red-400">
                   {getInitials(user?.nom, user?.prenom)}
                 </div>
               )}
               <div className="hidden sm:block">
-                <h2 className="text-white font-semibold text-sm xl:text-base">{user?.prenom} {user?.nom}</h2>
+                <h2 className="text-white font-semibold text-sm lg:text-base">{user?.prenom} {user?.nom}</h2>
                 <p className="text-xs text-red-400 font-medium flex items-center gap-1">
                   <Shield size={10} /> Admin
                 </p>
@@ -290,12 +290,12 @@ function AdminLayout({ user, children }) {
             </div>
             <button
               onClick={closeSidebar}
-              className="xl:hidden p-2 hover:bg-white/10 rounded-lg"
+              className="lg:hidden p-2 hover:bg-white/10 rounded-lg"
             >
               <X size={20} className="text-white" />
             </button>
           </div>
-          <div className="text-center hidden xl:block">
+          <div className="text-center hidden lg:block">
             <span className="text-xs text-white/50">ARIS MANAGER - ADMIN</span>
           </div>
         </div>
@@ -568,7 +568,7 @@ function AdminLayout({ user, children }) {
       </aside>
 
       <main className="flex-1 min-h-screen transition-all duration-300">
-        <div className="xl:hidden p-4 bg-slate-900 border-b border-white/10 flex items-center justify-between">
+        <div className="lg:hidden p-4 bg-slate-900 border-b border-white/10 flex items-center justify-between">
           <button
             onClick={() => setSidebarOpen(true)}
             className="p-2 bg-white/10 rounded-lg"
@@ -578,7 +578,7 @@ function AdminLayout({ user, children }) {
           <h1 className="text-white font-semibold">ARIS MANAGER - ADMIN</h1>
           <div className="w-10"></div>
         </div>
-        <div className="p-4 md:p-6 xl:p-8">
+        <div className="p-4 md:p-6 lg:p-8">
           {children}
         </div>
       </main>
