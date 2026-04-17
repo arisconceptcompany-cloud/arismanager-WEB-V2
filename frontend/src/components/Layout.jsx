@@ -211,6 +211,9 @@ function Layout({ user, children }) {
               <CloseIcon size={20} className="text-white" />
             </button>
           </div>
+          <div className="text-center hidden lg:block">
+            <span className="text-xs text-white/50">ARIS MANAGER</span>
+          </div>
         </div>
 
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
@@ -342,12 +345,6 @@ function Layout({ user, children }) {
 
       <main className={`flex-1 min-h-screen transition-all duration-300`}>
         <div className="lg:hidden flex items-center justify-between p-4 bg-slate-900 border-b border-white/10">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="p-2 bg-white/10 rounded-lg"
-          >
-            <Menu size={24} className="text-white" />
-          </button>
           <h1 className="text-white font-semibold">ARIS MANAGER</h1>
           <div className="w-10"></div>
         </div>
