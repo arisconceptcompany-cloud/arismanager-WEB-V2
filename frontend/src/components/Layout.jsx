@@ -345,8 +345,14 @@ function Layout({ user, children }) {
 
       <main className={`flex-1 min-h-screen transition-all duration-300`}>
         <div className="lg:hidden flex items-center justify-between p-4 bg-slate-900 border-b border-white/10">
-          <h1 className="text-white font-semibold">ARIS MANAGER</h1>
-          <div className="w-10"></div>
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="p-2 bg-white/10 rounded-lg"
+          >
+            <Menu size={24} className="text-white" />
+          </button>
+          <img src="/logo.png" alt="ArisManager" className="h-8" />
+          <span className="text-white font-semibold text-sm">ArisManager-Employee</span>
         </div>
         <div className="p-4 md:p-6 lg:p-8">
           {children}
