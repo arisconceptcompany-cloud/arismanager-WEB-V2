@@ -354,6 +354,11 @@ function Layout({ user, children }) {
           <img src="/logo.png" alt="ArisManager" className="h-8" />
           <span className="text-white font-semibold text-sm">ArisManager-Employee</span>
         </div>
+        <div className="hidden lg:flex items-center justify-between p-4 bg-slate-900 border-b border-white/10">
+          <img src="/logo.png" alt="ArisManager" className="h-10" />
+          <span className="text-white font-semibold text-lg">ArisManager-Employee</span>
+          <div className="w-10"></div>
+        </div>
         <div className="p-4 md:p-6 lg:p-8">
           {children}
         </div>
