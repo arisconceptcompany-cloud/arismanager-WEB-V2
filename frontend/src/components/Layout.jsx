@@ -330,15 +330,15 @@ function Layout({ user, children }) {
             onClick={() => setShowPasswordModal(true)}
             className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-white/10 hover:bg-white/20 text-white rounded-lg font-medium transition-all mb-2"
           >
-            <Lock size={18} />
-            <span className="hidden sm:inline">Changer mot de passe</span>
+            
+            <span className="">Changer mot de passe</span>
           </button>
           <button
             onClick={handleLogout}
             className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-red-600/80 hover:bg-red-600 text-white rounded-lg font-medium transition-all"
           >
-            <LogOut size={18} />
-            <span className="hidden sm:inline">Déconnexion</span>
+            
+            <span className="">Déconnexion</span>
           </button>
         </div>
       </aside>
