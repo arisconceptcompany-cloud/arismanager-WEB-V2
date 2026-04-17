@@ -190,7 +190,7 @@ function Layout({ user, children }) {
       )}
 
       <aside className={`${isMobile ? 'fixed' : 'sticky'} top-0 h-screen left-0 z-50 w-64 bg-black/95 lg:bg-black/40 backdrop-blur-md border-r border-white/20 flex flex-col ${isMobile ? (sidebarOpen ? 'translate-x-0' : '-translate-x-full') : ''} transition-transform duration-300`}>
-        <div className="p-4 lg:p-6 border-b border-white/20">
+        <div className="p-4 lg:p-6 border-b border-white/20 flex-shrink-0">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
               <img 
@@ -216,7 +216,7 @@ function Layout({ user, children }) {
           </div>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto overflow-x-hidden">
           {menuItems.map((item) => (
             <NavLink
               key={item.path}
@@ -320,7 +320,7 @@ function Layout({ user, children }) {
           </div>
         </nav>
 
-        <div className="p-4 border-t border-white/20">
+        <div className="p-4 border-t border-white/20 flex-shrink-0">
           <div className="bg-white/10 rounded-lg p-3 mb-3">
             <div className="text-xs text-white/50 mb-1">Département</div>
             <div className="text-sm text-white font-medium">{user?.departement || 'Non assigné'}</div>
@@ -354,7 +354,7 @@ function Layout({ user, children }) {
           <img src="/logo.png" alt="ArisManager" className="h-8" />
           <span className="text-white font-semibold text-sm">ArisManager-Employee</span>
         </div>
-        <div className="hidden lg:flex items-center justify-between p-4 bg-slate-900 border-b border-white/10">
+        <div className="hidden lg:flex items-center justify-between px-6 py-4 bg-slate-900 border-b border-white/10">
           <img src="/logo.png" alt="ArisManager" className="h-10" />
           <span className="text-white font-semibold text-lg">ArisManager-Employee</span>
           <div className="w-10"></div>
