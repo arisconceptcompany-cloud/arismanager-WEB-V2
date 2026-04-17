@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Clock, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
+import { Clock, ChevronLeft, ChevronRight, RefreshCw, Monitor } from 'lucide-react';
 import api, { DEFAULT_AVATAR } from '../../services/api';
 
 function AdminPresences() {
   const [presences, setPresences] = useState([]);
   const [employes, setEmployes] = useState([]);
+  const [pcStatus, setPcStatus] = useState({});
   const [currentDate, setCurrentDate] = useState(new Date());
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
@@ -78,13 +79,20 @@ function AdminPresences() {
       const month = String(currentDate.getMonth() + 1).padStart(2, '0');
       const day = String(currentDate.getDate()).padStart(2, '0');
       const dateStr = `${year}-${month}-${day}`;
-      const [presenceRes, empRes] = await Promise.all([
+      const [presenceRes, empRes, pcStatusRes] = await Promise.all([
         api.get('/admin/presences', { params: { date: dateStr } }),
-        api.get('/admin/employes')
+        api.get('/admin/employes'),
+        api.get('/admin/pc-status')
       ]);
       setPresences(presenceRes.data || []);
       setEmployes(empRes.data || []);
       preloadPhotos(empRes.data || []);
+      
+      const statusMap = {};
+      (pcStatusRes.data || []).forEach(s => {
+        statusMap[s.id] = s;
+      });
+      setPcStatus(statusMap);
     } catch (error) {
       console.error('Erreur chargement:', error);
     } finally {
@@ -219,6 +227,48 @@ function AdminPresences() {
         </div>
       </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center">
+              <Monitor className="text-green-400" size={20} />
+            </div>
+            <div>
+              <p className="text-sm text-white/70">PC en ligne</p>
+              <p className="text-2xl font-bold text-green-400">
+                {Object.values(pcStatus).filter(s => s.is_online).length}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gray-500/20 rounded-full flex items-center justify-center">
+              <Monitor className="text-gray-400" size={20} />
+            </div>
+            <div>
+              <p className="text-sm text-white/70">PC hors ligne</p>
+              <p className="text-2xl font-bold text-gray-400">
+                {Object.values(pcStatus).filter(s => !s.is_online).length}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center">
+              <Monitor className="text-blue-400" size={20} />
+            </div>
+            <div>
+              <p className="text-sm text-white/70">Total PCs</p>
+              <p className="text-2xl font-bold text-blue-400">
+                {Object.keys(pcStatus).length}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -226,10 +276,11 @@ function AdminPresences() {
               <tr className="bg-white/5 border-b border-white/20">
                 <th className="px-6 py-4 text-left text-white font-semibold">Matricule</th>
                 <th className="px-6 py-4 text-left text-white font-semibold">Nom Complet</th>
-                <th className="px-6 py-4 text-center text-white font-semibold">Heure Arrivée</th>
+                <th className="px-6 py-4 text-center text-white font-semibold">Heure Arrivee</th>
                 <th className="px-6 py-4 text-center text-white font-semibold">Heure Sortie</th>
                 <th className="px-6 py-4 text-center text-white font-semibold">Retard</th>
                 <th className="px-6 py-4 text-center text-white font-semibold">Total Heures</th>
+                <th className="px-6 py-4 text-center text-white font-semibold">PC Status</th>
               </tr>
             </thead>
             <tbody>
@@ -300,13 +351,38 @@ function AdminPresences() {
                         {calculateWorkHours(presence?.heure_arrivee, presence?.heure_depart)}
                       </span>
                     </td>
+                    <td className="px-6 py-4 text-center">
+                      {pcStatus[employe.id] ? (
+                        <div className="flex flex-col items-center gap-1">
+                          {pcStatus[employe.id].is_online ? (
+                            <>
+                              <div className="flex items-center gap-1 px-2 py-1 bg-green-500/20 rounded-full">
+                                <Monitor size={14} className="text-green-400" />
+                                <span className="text-green-400 text-xs font-medium">En ligne</span>
+                              </div>
+                              <span className="text-white/40 text-xs">{pcStatus[employe.id].last_seen_text}</span>
+                            </>
+                          ) : (
+                            <>
+                              <div className="flex items-center gap-1 px-2 py-1 bg-gray-500/20 rounded-full">
+                                <Monitor size={14} className="text-gray-400" />
+                                <span className="text-gray-400 text-xs font-medium">Hors ligne</span>
+                              </div>
+                              <span className="text-white/40 text-xs">{pcStatus[employe.id].last_seen_text}</span>
+                            </>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-white/40 text-sm">-</span>
+                      )}
+                    </td>
                   </tr>
                 );
               })}
               {employes.length === 0 && (
                 <tr>
-                  <td colSpan="6" className="px-6 py-8 text-center text-white/50">
-                    Aucun employé trouvé
+                  <td colSpan="7" className="px-6 py-8 text-center text-white/50">
+                    Aucun employe trouve
                   </td>
                 </tr>
               )}
@@ -320,6 +396,19 @@ function AdminPresences() {
           <span className="w-3 h-3 bg-red-500/20 rounded-full"></span>
           <span>Retard</span>
         </div>
+        <div className="flex items-center gap-2">
+          <span className="w-3 h-3 bg-green-400 rounded-full"></span>
+          <span>A l'heure</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="w-3 h-3 bg-green-500/20 rounded-full"></span>
+          <span>PC en ligne</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="w-3 h-3 bg-gray-500/20 rounded-full"></span>
+          <span>PC hors ligne</span>
+        </div>
+      </div>
         <div className="flex items-center gap-2">
           <span className="w-3 h-3 bg-green-400 rounded-full"></span>
           <span>À l'heure</span>
