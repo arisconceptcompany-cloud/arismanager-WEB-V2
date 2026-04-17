@@ -23,7 +23,6 @@ function AdminLayout({ user, children }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('all');
   const [isLoading, setIsLoading] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [showPassword, setShowPassword] = useState({ current: false, new: false, confirm: false });
@@ -64,14 +63,6 @@ function AdminLayout({ user, children }) {
     const interval = setInterval(fetchNotifCount, 30000);
     return () => clearInterval(interval);
   }, []);
-
-  useEffect(() => {
-    if (sidebarOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-  }, [sidebarOpen]);
 
   const fetchNotifications = async () => {
     try {
@@ -252,48 +243,32 @@ function AdminLayout({ user, children }) {
     return `${prenom?.[0] || ''}${nom?.[0] || ''}`.toUpperCase();
   };
 
-  const closeSidebar = () => setSidebarOpen(false);
-
   return (
     <div className="flex min-h-screen">
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/60 z-40 lg:hidden"
-          onClick={closeSidebar}
-        />
-      )}
-
-      {/* ✅ CORRECTION : suppression du "fixed" en double à la fin */}
-      <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-slate-900/95 lg:bg-gradient-to-b lg:from-slate-900 lg:to-slate-800 backdrop-blur-md border-r border-white/20 flex flex-col transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} h-screen`}>
-        <div className="p-4 lg:p-6 border-b border-white/20">
+      <aside className="w-64 min-h-screen bg-slate-900 border-r border-white/20 flex flex-col">
+        <div className="p-6 border-b border-white/20">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
               {profilePhoto ? (
                 <img 
                   src={profilePhoto} 
                   alt="Profil" 
-                  className="w-10 h-10 lg:w-12 lg:h-12 rounded-full object-cover border-2 border-red-400"
+                  className="w-12 h-12 rounded-full object-cover border-2 border-red-400"
                 />
               ) : (
-                <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-red-500 to-orange-600 rounded-full flex items-center justify-center text-white font-bold border-2 border-red-400">
+                <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-orange-600 rounded-full flex items-center justify-center text-white font-bold border-2 border-red-400">
                   {getInitials(user?.nom, user?.prenom)}
                 </div>
               )}
-              <div className="hidden sm:block">
-                <h2 className="text-white font-semibold text-sm lg:text-base">{user?.prenom} {user?.nom}</h2>
+              <div>
+                <h2 className="text-white font-semibold text-base">{user?.prenom} {user?.nom}</h2>
                 <p className="text-xs text-red-400 font-medium flex items-center gap-1">
                   <Shield size={10} /> Admin
                 </p>
               </div>
             </div>
-            <button
-              onClick={closeSidebar}
-              className="lg:hidden p-2 hover:bg-white/10 rounded-lg"
-            >
-              <X size={20} className="text-white" />
-            </button>
           </div>
-          <div className="text-center hidden lg:block">
+          <div className="text-center">
             <span className="text-xs text-white/50">ARIS MANAGER - ADMIN</span>
           </div>
         </div>
@@ -304,9 +279,8 @@ function AdminLayout({ user, children }) {
               key={item.path}
               to={item.path}
               end={item.path === '/admin'}
-              onClick={closeSidebar}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 xl:px-4 py-2.5 xl:py-3 rounded-lg transition-all duration-200 ${
+                `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                   isActive
                     ? 'bg-red-600 text-white'
                     : 'text-white/70 hover:bg-white/10 hover:text-white'
@@ -325,9 +299,8 @@ function AdminLayout({ user, children }) {
 
           <NavLink
             to="/admin/chat"
-            onClick={closeSidebar}
             className={({ isActive }) =>
-              `flex items-center justify-between px-3 xl:px-4 py-2.5 xl:py-3 rounded-lg transition-all duration-200 ${
+              `flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 ${
                 isActive
                   ? 'bg-red-600 text-white'
                   : 'text-white/70 hover:bg-white/10 hover:text-white'
@@ -348,7 +321,7 @@ function AdminLayout({ user, children }) {
           <div className="border-t border-white/20 my-4 pt-4">
             <button
               onClick={() => setShowNotifs(!showNotifs)}
-              className={`flex items-center justify-between w-full px-3 xl:px-4 py-2.5 xl:py-3 rounded-lg transition-all duration-200 ${showNotifs ? 'bg-red-600 text-white' : 'text-white/70 hover:bg-white/10'}`}
+              className={`flex items-center justify-between w-full px-4 py-3 rounded-lg transition-all duration-200 ${showNotifs ? 'bg-red-600 text-white' : 'text-white/70 hover:bg-white/10'}`}
             >
               <div className="flex items-center gap-3">
                 <Bell size={20} />
@@ -362,7 +335,7 @@ function AdminLayout({ user, children }) {
             </button>
 
             {showNotifs && (
-              <div className="mt-2 max-h-64 xl:max-h-80 overflow-y-auto bg-slate-800/50 rounded-lg border border-white/10">
+              <div className="mt-2 max-h-80 overflow-y-auto bg-slate-800/50 rounded-lg border border-white/10">
                 <div className="flex items-center justify-between px-3 py-2 border-b border-white/10 sticky top-0 bg-slate-800">
                   <span className="text-xs text-white/50">Notifications</span>
                   {notifCount > 0 && (
@@ -382,7 +355,7 @@ function AdminLayout({ user, children }) {
                   notifications.map((notif) => (
                     <div
                       key={notif.id}
-                      onClick={() => { if (!notif.est_lu) handleMarkRead(notif.id); if (notif.lien) navigate(notif.lien); setShowNotifs(false); closeSidebar(); }}
+                      onClick={() => { if (!notif.est_lu) handleMarkRead(notif.id); if (notif.lien) navigate(notif.lien); setShowNotifs(false); }}
                       className={`px-3 py-2 border-b border-white/5 hover:bg-white/5 cursor-pointer ${notif.est_lu ? 'opacity-50' : ''}`}
                     >
                       <div className="flex items-start gap-2">
@@ -405,7 +378,7 @@ function AdminLayout({ user, children }) {
           <div className="border-t border-white/20 my-4 pt-4">
             <button
               onClick={() => setShowAdminPanel(!showAdminPanel)}
-              className="flex items-center justify-between w-full px-3 xl:px-4 py-2.5 xl:py-3 rounded-lg transition-all duration-200 bg-white/5 hover:bg-white/10 text-white"
+              className="flex items-center justify-between w-full px-4 py-3 rounded-lg transition-all duration-200 bg-white/5 hover:bg-white/10 text-white"
             >
               <div className="flex items-center gap-3">
                 <Crown size={20} className="text-yellow-400" />
@@ -566,18 +539,8 @@ function AdminLayout({ user, children }) {
         </div>
       </aside>
 
-      <main className="flex-1 min-h-screen transition-all duration-300">
-        <div className="lg:hidden p-4 bg-slate-900 border-b border-white/10 flex items-center justify-between">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="p-2 bg-white/10 rounded-lg"
-          >
-            <Menu size={24} className="text-white" />
-          </button>
-          <h1 className="text-white font-semibold">ARIS MANAGER - ADMIN</h1>
-          <div className="w-10"></div>
-        </div>
-        <div className="p-4 md:p-6 lg:p-8">
+      <main className="flex-1 min-h-screen">
+        <div className="p-6">
           {children}
         </div>
       </main>
