@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, User, Clock, Calendar, FolderKanban, 
   Wallet, FileText, LogOut, MessageCircle, Users, DollarSign, Shield, 
-  ChevronDown, ChevronRight, Crown, UserMinus, QrCode, Search, X, Check, AlertCircle, Loader2, Bell, CheckCheck, Menu
+  ChevronDown, ChevronRight, Crown, UserMinus, QrCode, Search, X, Check, AlertCircle, Loader2, Bell, CheckCheck, Menu, Lock, Eye, EyeOff
 } from 'lucide-react';
 import { authAPI, chatAPI, notificationAPI, DEFAULT_AVATAR } from '../services/api';
 import { useUser } from '../context/UserContext';
@@ -24,6 +24,12 @@ function AdminLayout({ user, children }) {
   const [filterRole, setFilterRole] = useState('all');
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [showPassword, setShowPassword] = useState({ current: false, new: false, confirm: false });
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [notification, setNotification] = useState(null);
 
   useEffect(() => {
     const fetchUnread = async () => {
@@ -103,6 +109,43 @@ function AdminLayout({ user, children }) {
     localStorage.removeItem('user');
     localStorage.removeItem('session_token');
     navigate('/login', { replace: true });
+  };
+
+  const showToast = (type, message) => {
+    setNotification({ type, message });
+    setTimeout(() => setNotification(null), 4000);
+  };
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    setPasswordError('');
+
+    if (passwordData.newPassword.length < 6) {
+      setPasswordError('Le nouveau mot de passe doit contenir au moins 6 caractères');
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordError('Les mots de passe ne correspondent pas');
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+      await authAPI.changePassword(passwordData.currentPassword, passwordData.newPassword);
+      setShowPasswordModal(false);
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      showToast('success', 'Mot de passe changé avec succès !');
+    } catch (error) {
+      setPasswordError(error.response?.data?.error || 'Erreur lors du changement de mot de passe');
+      showToast('error', 'Échec du changement de mot de passe');
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  const togglePasswordVisibility = (field) => {
+    setShowPassword(prev => ({ ...prev, [field]: !prev[field] }));
   };
 
   const toggleAdminRole = async (employe) => {
@@ -508,6 +551,13 @@ function AdminLayout({ user, children }) {
             <div className="text-xs text-white/50 mt-1">{user?.poste}</div>
           </div>
           <button
+            onClick={() => setShowPasswordModal(true)}
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-white/10 hover:bg-white/20 text-white rounded-lg font-medium transition-all mb-2"
+          >
+            <Lock size={18} />
+            <span className="hidden sm:inline">Changer mot de passe</span>
+          </button>
+          <button
             onClick={handleLogout}
             className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-red-600/80 hover:bg-red-600 text-white rounded-lg font-medium transition-all"
           >
@@ -559,6 +609,122 @@ function AdminLayout({ user, children }) {
                 )}
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {notification && (
+        <div className={`fixed top-6 right-6 z-[9999] flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl animate-slide-in min-w-[280px] ${
+          notification.type === 'success' ? 'bg-green-600' : 'bg-red-600'
+        } text-white`}>
+          <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+            {notification.type === 'success' ? <Check size={20} /> : <X size={20} />}
+          </div>
+          <span className="font-medium">{notification.message}</span>
+        </div>
+      )}
+
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowPasswordModal(false)}>
+          <div className="bg-slate-800 rounded-xl w-full max-w-md border border-white/20" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6 border-b border-white/20 flex items-center justify-between">
+              <h3 className="text-xl font-semibold text-white flex items-center gap-2">
+                <Lock size={22} /> Changer le mot de passe
+              </h3>
+              <button onClick={() => setShowPasswordModal(false)} className="text-white/50 hover:text-white">
+                <X size={24} />
+              </button>
+            </div>
+            <form onSubmit={handlePasswordChange} className="p-6 space-y-4">
+              <div>
+                <label className="block text-white/70 text-sm mb-2">Mot de passe actuel</label>
+                <div className="relative">
+                  <input
+                    type={showPassword.current ? 'text' : 'password'}
+                    value={passwordData.currentPassword}
+                    onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                    required
+                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-red-500 pr-12"
+                    placeholder="Entrez le mot de passe actuel"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => togglePasswordVisibility('current')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white"
+                  >
+                    {showPassword.current ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-white/70 text-sm mb-2">Nouveau mot de passe</label>
+                <div className="relative">
+                  <input
+                    type={showPassword.new ? 'text' : 'password'}
+                    value={passwordData.newPassword}
+                    onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                    required
+                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-red-500 pr-12"
+                    placeholder="Minimum 6 caractères"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => togglePasswordVisibility('new')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white"
+                  >
+                    {showPassword.new ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-white/70 text-sm mb-2">Confirmer le nouveau mot de passe</label>
+                <div className="relative">
+                  <input
+                    type={showPassword.confirm ? 'text' : 'password'}
+                    value={passwordData.confirmPassword}
+                    onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                    required
+                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-red-500 pr-12"
+                    placeholder="Confirmez le nouveau mot de passe"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => togglePasswordVisibility('confirm')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white"
+                  >
+                    {showPassword.confirm ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
+              </div>
+              {passwordError && (
+                <div className="bg-red-500/20 border border-red-500/50 text-red-300 px-4 py-3 rounded-lg text-sm">
+                  {passwordError}
+                </div>
+              )}
+              <div className="flex justify-end gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordModal(false)}
+                  className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={passwordLoading}
+                  className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+                >
+                  {passwordLoading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      En cours...
+                    </>
+                  ) : (
+                    'Confirmer'
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
