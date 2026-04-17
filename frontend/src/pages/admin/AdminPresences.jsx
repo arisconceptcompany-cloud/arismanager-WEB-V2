@@ -409,11 +409,6 @@ function AdminPresences() {
           <span>PC hors ligne</span>
         </div>
       </div>
-        <div className="flex items-center gap-2">
-          <span className="w-3 h-3 bg-green-400 rounded-full"></span>
-          <span>À l'heure</span>
-        </div>
-      </div>
     </div>
   );
 }
