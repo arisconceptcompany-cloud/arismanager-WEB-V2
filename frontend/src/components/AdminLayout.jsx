@@ -245,8 +245,8 @@ function AdminLayout({ user, children }) {
 
   return (
     <div className="flex min-h-screen">
-      <aside style={{ width: '260px', minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#0f172a', borderRight: '1px solid rgba(255,255,255,0.2)', position: 'fixed', left: 0, top: 0 }}>
-        <div style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.2)' }}>
+      <aside style={{ width: '260px', height: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#0f172a', borderRight: '1px solid rgba(255,255,255,0.2)', position: 'fixed', left: 0, top: 0, overflowY: 'scroll' }}>
+        <div style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.2)', flexShrink: 0 }}>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
               {profilePhoto ? (
@@ -516,7 +516,7 @@ function AdminLayout({ user, children }) {
           </div>
         </nav>
 
-        <div className="p-4 border-t border-white/20">
+        <div className="p-4 border-t border-white/20" style={{ flexShrink: 0 }}>
           <div className="bg-white/10 rounded-lg p-3 mb-3">
             <div className="text-xs text-white/50 mb-1">Département</div>
             <div className="text-sm text-white font-medium">{user?.departement || 'Non assigné'}</div>
