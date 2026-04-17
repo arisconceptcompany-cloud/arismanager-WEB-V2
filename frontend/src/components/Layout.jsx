@@ -211,9 +211,6 @@ function Layout({ user, children }) {
               <CloseIcon size={20} className="text-white" />
             </button>
           </div>
-          <div className="text-center hidden lg:block">
-            <span className="text-xs text-white/50">ARIS MANAGER</span>
-          </div>
         </div>
 
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
