@@ -119,17 +119,14 @@ function AdminLayout({ user, children }) {
   const handlePasswordChange = async (e) => {
     e.preventDefault();
     setPasswordError('');
-
     if (passwordData.newPassword.length < 6) {
       setPasswordError('Le nouveau mot de passe doit contenir au moins 6 caractères');
       return;
     }
-
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       setPasswordError('Les mots de passe ne correspondent pas');
       return;
     }
-
     setPasswordLoading(true);
     try {
       await authAPI.changePassword(passwordData.currentPassword, passwordData.newPassword);
@@ -266,7 +263,8 @@ function AdminLayout({ user, children }) {
         />
       )}
 
-      <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-slate-900/95 lg:bg-gradient-to-b lg:from-slate-900 lg:to-slate-800 backdrop-blur-md border-r border-white/20 flex flex-col transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} lg:block fixed h-screen`}>
+      {/* ✅ CORRECTION : suppression du "fixed" en double à la fin */}
+      <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-slate-900/95 lg:bg-gradient-to-b lg:from-slate-900 lg:to-slate-800 backdrop-blur-md border-r border-white/20 flex flex-col transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} h-screen`}>
         <div className="p-4 lg:p-6 border-b border-white/20">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
@@ -324,6 +322,7 @@ function AdminLayout({ user, children }) {
               )}
             </NavLink>
           ))}
+
           <NavLink
             to="/admin/chat"
             onClick={closeSidebar}
@@ -555,14 +554,14 @@ function AdminLayout({ user, children }) {
             className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-white/10 hover:bg-white/20 text-white rounded-lg font-medium transition-all mb-2"
           >
             <Lock size={18} />
-            <span className="hidden sm:inline">Changer mot de passe</span>
+            <span>Changer mot de passe</span>
           </button>
           <button
             onClick={handleLogout}
             className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-red-600/80 hover:bg-red-600 text-white rounded-lg font-medium transition-all"
           >
             <LogOut size={18} />
-            <span className="hidden sm:inline">Déconnexion</span>
+            <span>Déconnexion</span>
           </button>
         </div>
       </aside>
