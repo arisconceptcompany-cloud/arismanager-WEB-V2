@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, User, Clock, Calendar, FolderKanban, 
-  Wallet, FileText, LogOut, MessageCircle, Bell, X, Check, CheckCheck, Menu, X as CloseIcon, Lock, Eye, EyeOff
+  Wallet, FileText, LogOut, MessageCircle, Bell, X, Check, CheckCheck, Menu, X as CloseIcon, Lock, Eye, EyeOff, FolderArchive
 } from 'lucide-react';
 import { authAPI, chatAPI, notificationAPI, DEFAULT_AVATAR } from '../services/api';
 import { useUser } from '../context/UserContext';
@@ -133,6 +133,7 @@ function Layout({ user, children }) {
     { path: '/pointages', icon: Clock, label: 'Mes pointages' },
     { path: '/conges', icon: Calendar, label: 'Mes congés', badge: notifCount },
     { path: '/projets', icon: FolderKanban, label: 'Projets' },
+    { path: '/fichiers', icon: FolderArchive, label: 'Fichiers' },
     { path: '/salaires', icon: Wallet, label: 'Mon salaire' },
     { path: '/rapports', icon: FileText, label: 'Mon rapport' },
   ];

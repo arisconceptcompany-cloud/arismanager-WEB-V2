@@ -8,6 +8,7 @@ import Profile from './pages/Profile';
 import Pointages from './pages/Pointages';
 import Conges from './pages/Conges';
 import Projets from './pages/Projets';
+import Fichiers from './pages/Fichiers';
 import Salaires from './pages/Salaires';
 import Rapports from './pages/Rapports';
 import Chat from './pages/Chat';
@@ -75,6 +76,7 @@ function AppContent() {
           <Route path="/pointages" element={<Layout user={user}><Pointages /></Layout>} />
           <Route path="/conges" element={<Layout user={user}><Conges /></Layout>} />
           <Route path="/projets" element={<Layout user={user}><Projets /></Layout>} />
+          <Route path="/fichiers" element={<Layout user={user}><Fichiers /></Layout>} />
           <Route path="/salaires" element={<Layout user={user}><Salaires /></Layout>} />
           <Route path="/rapports" element={<Layout user={user}><Rapports /></Layout>} />
           <Route path="/chat" element={<Layout user={user}><Chat /></Layout>} />

@@ -63,7 +63,17 @@ export const congeAPI = {
 export const projetAPI = {
   getProjets: () => api.get('/projets'),
   getAllProjets: () => api.get('/projets/all'),
-  getProjetById: (id) => api.get(`/projets/${id}`)
+  getProjetById: (id) => api.get(`/projets/${id}`),
+  createProjet: (data) => api.post('/projets', data)
+};
+
+export const fichierAPI = {
+  getFichiers: () => api.get('/fichiers'),
+  uploadFichier: (formData) => api.post('/fichiers', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  downloadFichier: (id) => api.get(`/fichiers/${id}/download`, { responseType: 'blob' }),
+  deleteFichier: (id) => api.delete(`/fichiers/${id}`)
 };
 
 export const salaireAPI = {

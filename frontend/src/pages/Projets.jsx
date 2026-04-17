@@ -34,12 +34,7 @@ function Projets() {
   const handleAddProjet = async (e) => {
     e.preventDefault();
     try {
-      await fetch(`http://167.86.118.96:3002/api/projets`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(newProjet)
-      });
+      await projetAPI.createProjet(newProjet);
       setShowAddModal(false);
       setNewProjet({ titre: '', description: '', date_debut: '', date_fin_prevue: '' });
       fetchProjets();
