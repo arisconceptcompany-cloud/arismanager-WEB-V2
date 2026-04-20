@@ -381,15 +381,21 @@ function Layout({ user, children }) {
       {/* ── MAIN ── */}
       <main className="flex-1 min-h-screen transition-all duration-300 flex flex-col">
 
-        {/* Topbar visible sur mobile uniquement */}
-        <div className="md:hidden flex items-center justify-between p-4 bg-slate-900 border-b border-white/10">
+        {/* Topbar mobile et desktop */}
+        <div className="flex items-center justify-between p-4 bg-slate-900 border-b border-white/10">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="p-2 bg-white/10 rounded-lg"
+            className="p-2 bg-white/10 rounded-lg hover:bg-white/20"
           >
             <Menu size={24} className="text-white" />
           </button>
-          <img src="/logo.png" alt="ArisManager" className="h-8" />
+          <button
+            onClick={() => setShowPasswordModal(true)}
+            className="p-2 bg-white/10 rounded-lg hover:bg-white/20"
+            title="Changer mot de passe"
+          >
+            <Lock size={20} className="text-white" />
+          </button>
           <button
             onClick={handleLogout}
             className="p-2 bg-red-600/80 hover:bg-red-600 rounded-lg"
