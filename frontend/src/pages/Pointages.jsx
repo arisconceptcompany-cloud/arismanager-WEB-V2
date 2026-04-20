@@ -164,7 +164,62 @@ function Pointages() {
             <p className="text-white/60">Vos pointages apparaîtront ici automatiquement</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          {/* Mobile cards */}
+          <div className="md:hidden space-y-3 mb-4">
+            {pointages.map((pointage) => {
+              const { estRetard, retard } = calculerRetard(pointage.heure_arrivee);
+              const totalTravail = calculerHeuresTravail(pointage.heure_arrivee, pointage.heure_depart);
+              return (
+                <div key={pointage.id} className="bg-white/5 rounded-lg p-4 border border-white/10">
+                  <div className="flex justify-between items-center mb-3">
+                    <div className="text-white font-medium">
+                      {(() => {
+                        const [y, m, d] = pointage.date.split('-');
+                        const date = new Date(y, m - 1, d);
+                        return date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+                      })()}
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
+                      pointage.statut === 'present' ? 'bg-green-500/20 text-green-400' :
+                      pointage.statut === 'retard' ? 'bg-amber-500/20 text-amber-400' :
+                      pointage.statut === 'absent' ? 'bg-red-500/20 text-red-400' :
+                      'bg-blue-500/20 text-blue-400'
+                    }`}>
+                      {pointage.statut}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="bg-white/5 rounded p-2">
+                      <p className="text-white/50 text-xs">Entrée</p>
+                      <p className={estRetard ? "text-amber-400" : "text-green-400"}>
+                        {formatTime(pointage.heure_arrivee) || '-'}
+                      </p>
+                    </div>
+                    <div className="bg-white/5 rounded p-2">
+                      <p className="text-white/50 text-xs">Sortie</p>
+                      <p className="text-white">{formatTime(pointage.heure_depart) || '-'}</p>
+                    </div>
+                    <div className="bg-white/5 rounded p-2">
+                      <p className="text-white/50 text-xs">Retard</p>
+                      {estRetard ? (
+                        <p className="text-red-400">+{retard}</p>
+                      ) : (
+                        <p className="text-green-400">-</p>
+                      )}
+                    </div>
+                    <div className="bg-white/5 rounded p-2">
+                      <p className="text-white/50 text-xs">Total</p>
+                      <p className="text-purple-400">{totalTravail || '-'}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden md:overflow-x-auto">
             <table className="w-full">
               <thead className="bg-black/30">
                 <tr>
@@ -252,12 +307,13 @@ function Pointages() {
                           {pointage.statut}
                         </span>
                       </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+</tr>
+                );
+              })}
+            </tbody>
+          </table>
           </div>
+          </>
         )}
       </div>
 

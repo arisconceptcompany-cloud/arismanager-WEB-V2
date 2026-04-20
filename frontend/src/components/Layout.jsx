@@ -201,7 +201,7 @@ function Layout({ user, children }) {
         className={`
           ${isMobile ? 'fixed' : 'sticky'} top-0 h-screen left-0 z-50
           w-56 sm:w-64 bg-black/95 backdrop-blur-md border-r border-white/20
-          flex flex-col transition-transform duration-300
+          flex flex-col transition-transform duration-300 overflow-y-auto
           ${isMobile ? (sidebarOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'}
         `}
       >
