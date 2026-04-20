@@ -12,6 +12,8 @@ import api from '../services/api';
 function AdminLayout({ user, children }) {
   const navigate = useNavigate();
   const { profilePhoto } = useUser();
+  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifCount, setNotifCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
@@ -29,6 +31,25 @@ function AdminLayout({ user, children }) {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const [notification, setNotification] = useState(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (!mobile) setSidebarOpen(true);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (isMobile && sidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => { document.body.style.overflow = 'unset'; };
+  }, [sidebarOpen, isMobile]);
 
   useEffect(() => {
     const fetchUnread = async () => {
@@ -262,10 +283,33 @@ function AdminLayout({ user, children }) {
     return `${prenom?.[0] || ''}${nom?.[0] || ''}`.toUpperCase();
   };
 
+  const closeSidebar = () => {
+    if (isMobile) setSidebarOpen(false);
+  };
+
   return (
     <div className="flex min-h-screen">
-      <aside style={{ width: '260px', height: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#0f172a', borderRight: '1px solid rgba(255,255,255,0.2)', position: 'fixed', left: 0, top: 0, overflowY: 'scroll' }}>
-        <div style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.2)', flexShrink: 0 }}>
+      {/* Overlay mobile */}
+      {isMobile && sidebarOpen && (
+        <div className="fixed inset-0 bg-black/60 z-40" onClick={closeSidebar} />
+      )}
+
+      {/* ── SIDEBAR ── */}
+      <aside
+        className={`
+          ${isMobile ? 'fixed' : 'sticky'} top-0 h-screen left-0 z-50
+          w-56 sm:w-64 bg-slate-900 border-r border-white/20
+          flex flex-col transition-transform duration-300
+          ${isMobile ? (sidebarOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'}
+        `}
+      >
+        <div className="p-4 sm:p-6 border-b border-white/20 flex-shrink-0">
+          {/* Header sidebar */}
+          {isMobile && (
+            <button onClick={closeSidebar} className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-lg">
+              <X size={20} className="text-white" />
+            </button>
+          )}
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
               {profilePhoto ? (
@@ -298,6 +342,7 @@ function AdminLayout({ user, children }) {
               key={item.path}
               to={item.path}
               end={item.path === '/admin'}
+              onClick={closeSidebar}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                   isActive
@@ -318,6 +363,7 @@ function AdminLayout({ user, children }) {
 
           <NavLink
             to="/admin/chat"
+            onClick={closeSidebar}
             className={({ isActive }) =>
               `flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 ${
                 isActive
@@ -374,7 +420,7 @@ function AdminLayout({ user, children }) {
                   notifications.map((notif) => (
                     <div
                       key={notif.id}
-                      onClick={() => { if (!notif.est_lu) handleMarkRead(notif.id); if (notif.lien) navigate(notif.lien); setShowNotifs(false); }}
+                      onClick={() => { if (!notif.est_lu) handleMarkRead(notif.id); if (notif.lien) navigate(notif.lien); setShowNotifs(false); closeSidebar(); }}
                       className={`px-3 py-2 border-b border-white/5 hover:bg-white/5 cursor-pointer ${notif.est_lu ? 'opacity-50' : ''}`}
                     >
                       <div className="flex items-start gap-2">
@@ -558,8 +604,21 @@ function AdminLayout({ user, children }) {
         </div>
       </aside>
 
-      <main style={{ marginLeft: '260px', flex: 1, minHeight: '100vh' }}>
-        <div style={{ padding: '1.5rem' }}>
+      {/* ── MAIN ── */}
+      <main className="flex-1 min-h-screen transition-all duration-300 flex flex-col">
+        {/* Topbar visible sur mobile uniquement */}
+        <div className="md:hidden flex items-center justify-between p-4 bg-slate-900 border-b border-white/10">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="p-2 bg-white/10 rounded-lg"
+          >
+            <Menu size={24} className="text-white" />
+          </button>
+          <img src="/logo.png" alt="ArisManager" className="h-8" />
+          <span className="text-white font-semibold text-sm">ArisManager</span>
+        </div>
+
+        <div className="flex-1 p-3 sm:p-4 md:p-6">
           {children}
         </div>
       </main>

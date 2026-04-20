@@ -22,8 +22,8 @@ function Layout({ user, children }) {
   const [notifCount, setNotifCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
   const [showNotifs, setShowNotifs] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 1024);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [showPassword, setShowPassword] = useState({ current: false, new: false, confirm: false });
@@ -33,7 +33,7 @@ function Layout({ user, children }) {
 
   useEffect(() => {
     const handleResize = () => {
-      const mobile = window.innerWidth < 1024;
+      const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
       if (!mobile) setSidebarOpen(true);
     };
@@ -200,7 +200,7 @@ function Layout({ user, children }) {
       <aside
         className={`
           ${isMobile ? 'fixed' : 'sticky'} top-0 h-screen left-0 z-50
-          w-64 bg-black/95 backdrop-blur-md border-r border-white/20
+          w-56 sm:w-64 bg-black/95 backdrop-blur-md border-r border-white/20
           flex flex-col transition-transform duration-300
           ${isMobile ? (sidebarOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'}
         `}
@@ -382,7 +382,7 @@ function Layout({ user, children }) {
       <main className="flex-1 min-h-screen transition-all duration-300 flex flex-col">
 
         {/* Topbar visible sur mobile uniquement */}
-        <div className="lg:hidden flex items-center justify-between p-4 bg-slate-900 border-b border-white/10">
+        <div className="md:hidden flex items-center justify-between p-4 bg-slate-900 border-b border-white/10">
           <button
             onClick={() => setSidebarOpen(true)}
             className="p-2 bg-white/10 rounded-lg"
@@ -390,11 +390,11 @@ function Layout({ user, children }) {
             <Menu size={24} className="text-white" />
           </button>
           <img src="/logo.png" alt="ArisManager" className="h-8" />
-          <span className="text-white font-semibold text-sm">ArisManager-Employee</span>
+          <span className="text-white font-semibold text-sm">ArisManager</span>
         </div>
 
         {/* Contenu */}
-        <div className="flex-1 p-4 md:p-6 lg:p-8">
+        <div className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8">
           {children}
         </div>
       </main>

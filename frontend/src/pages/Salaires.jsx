@@ -47,7 +47,7 @@ function Salaires() {
           <div className="text-5xl font-bold mb-2">{formatMontant(salaireActuel.salaire_net)}</div>
           <p className="opacity-80">Net à payer</p>
 
-          <div className="grid grid-cols-3 gap-4 mt-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
               <label className="text-sm opacity-80 block mb-1">Salaire de base</label>
               <span className="text-2xl font-semibold">{formatMontant(salaireActuel.salaire_base)}</span>
