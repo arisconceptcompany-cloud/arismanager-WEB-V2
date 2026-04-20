@@ -17,6 +17,7 @@ function Layout({ user, children }) {
     }
     return getAvatarUrl();
   };
+
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifCount, setNotifCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
@@ -31,7 +32,11 @@ function Layout({ user, children }) {
   const [notification, setNotification] = useState(null);
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    const handleResize = () => {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      if (!mobile) setSidebarOpen(true);
+    };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -70,13 +75,15 @@ function Layout({ user, children }) {
     }
   }, [showNotifs]);
 
+  // Bloquer le scroll body uniquement sur mobile quand sidebar ouverte
   useEffect(() => {
-    if (sidebarOpen) {
+    if (isMobile && sidebarOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
     }
-  }, [sidebarOpen]);
+    return () => { document.body.style.overflow = 'unset'; };
+  }, [sidebarOpen, isMobile]);
 
   const fetchNotifications = async () => {
     try {
@@ -140,11 +147,9 @@ function Layout({ user, children }) {
     { path: '/rapports', icon: FileText, label: 'Mon rapport' },
   ];
 
-  const getInitials = (nom, prenom) => {
-    return `${prenom?.[0] || ''}${nom?.[0] || ''}`.toUpperCase();
+  const closeSidebar = () => {
+    if (isMobile) setSidebarOpen(false);
   };
-
-  const closeSidebar = () => setSidebarOpen(false);
 
   const showToast = (type, message) => {
     setNotification({ type, message });
@@ -154,17 +159,14 @@ function Layout({ user, children }) {
   const handlePasswordChange = async (e) => {
     e.preventDefault();
     setPasswordError('');
-
     if (passwordData.newPassword.length < 6) {
       setPasswordError('Le nouveau mot de passe doit contenir au moins 6 caractères');
       return;
     }
-
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       setPasswordError('Les mots de passe ne correspondent pas');
       return;
     }
-
     setPasswordLoading(true);
     try {
       await authAPI.changePassword(passwordData.currentPassword, passwordData.newPassword);
@@ -185,40 +187,59 @@ function Layout({ user, children }) {
 
   return (
     <div className="flex min-h-screen">
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/60 z-40 lg:hidden"
+
+      {/* Overlay mobile uniquement */}
+      {isMobile && sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-40"
           onClick={closeSidebar}
         />
       )}
 
-      <aside className={`${isMobile ? 'fixed' : 'sticky'} top-0 h-screen left-0 z-50 w-64 bg-black/95 lg:bg-black/40 backdrop-blur-md border-r border-white/20 flex flex-col ${isMobile ? (sidebarOpen ? 'translate-x-0' : '-translate-x-full') : ''} transition-transform duration-300`}>
+      {/* ── SIDEBAR ── */}
+      <aside
+        className={`
+          ${isMobile ? 'fixed' : 'sticky'} top-0 h-screen left-0 z-50
+          w-64 bg-black/95 backdrop-blur-md border-r border-white/20
+          flex flex-col transition-transform duration-300
+          ${isMobile ? (sidebarOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'}
+        `}
+      >
+        {/* Header sidebar */}
         <div className="p-4 lg:p-6 border-b border-white/20 flex-shrink-0">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <img 
-                src={getSidebarPhoto()} 
-                alt="Profil" 
+              <img
+                src={getSidebarPhoto()}
+                alt="Profil"
                 className="w-10 h-10 lg:w-12 lg:h-12 rounded-full object-cover border-2 border-blue-400"
                 onError={handlePhotoError}
               />
-              <div className="lg:block">
-                <h2 className="text-white font-semibold text-sm lg:text-base">{user?.prenom} {user?.nom}</h2>
+              <div>
+                <h2 className="text-white font-semibold text-sm lg:text-base">
+                  {user?.prenom} {user?.nom}
+                </h2>
                 <p className="text-xs text-blue-400 font-medium">{user?.matricule}</p>
               </div>
             </div>
-            <button
-              onClick={closeSidebar}
-              className="lg:hidden p-2 hover:bg-white/10 rounded-lg"
-            >
-              <CloseIcon size={20} className="text-white" />
-            </button>
+
+            {/* Bouton fermeture visible uniquement sur mobile */}
+            {isMobile && (
+              <button
+                onClick={closeSidebar}
+                className="p-2 hover:bg-white/10 rounded-lg"
+              >
+                <CloseIcon size={20} className="text-white" />
+              </button>
+            )}
           </div>
-          <div className="text-center hidden lg:block">
+
+          <div className="text-center">
             <span className="text-xs text-white/50">ARIS MANAGER</span>
           </div>
         </div>
 
+        {/* Navigation */}
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto overflow-x-hidden">
           {menuItems.map((item) => (
             <NavLink
@@ -243,6 +264,8 @@ function Layout({ user, children }) {
               )}
             </NavLink>
           ))}
+
+          {/* Messages */}
           <NavLink
             to="/chat"
             onClick={closeSidebar}
@@ -265,10 +288,13 @@ function Layout({ user, children }) {
             )}
           </NavLink>
 
+          {/* Notifications */}
           <div className="border-t border-white/20 my-4 pt-4">
             <button
               onClick={() => setShowNotifs(!showNotifs)}
-              className={`flex items-center justify-between w-full px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg transition-all duration-200 ${showNotifs ? 'bg-blue-600 text-white' : 'text-white/70 hover:bg-white/10'}`}
+              className={`flex items-center justify-between w-full px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg transition-all duration-200 ${
+                showNotifs ? 'bg-blue-600 text-white' : 'text-white/70 hover:bg-white/10'
+              }`}
             >
               <div className="flex items-center gap-3">
                 <Bell size={20} />
@@ -302,7 +328,12 @@ function Layout({ user, children }) {
                   notifications.map((notif) => (
                     <div
                       key={notif.id}
-                      onClick={() => { if (!notif.est_lu) handleMarkRead(notif.id); if (notif.lien) navigate(notif.lien); setShowNotifs(false); closeSidebar(); }}
+                      onClick={() => {
+                        if (!notif.est_lu) handleMarkRead(notif.id);
+                        if (notif.lien) navigate(notif.lien);
+                        setShowNotifs(false);
+                        closeSidebar();
+                      }}
                       className={`px-3 py-2 border-b border-white/5 hover:bg-white/5 cursor-pointer ${notif.est_lu ? 'opacity-50' : ''}`}
                     >
                       <div className="flex items-start gap-2">
@@ -323,6 +354,7 @@ function Layout({ user, children }) {
           </div>
         </nav>
 
+        {/* Footer sidebar */}
         <div className="p-4 border-t border-white/20 flex-shrink-0">
           <div className="bg-white/10 rounded-lg p-3 mb-3">
             <div className="text-xs text-white/50 mb-1">Département</div>
@@ -333,20 +365,23 @@ function Layout({ user, children }) {
             onClick={() => setShowPasswordModal(true)}
             className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-white/10 hover:bg-white/20 text-white rounded-lg font-medium transition-all mb-2"
           >
-            
-            <span className="">Changer mot de passe</span>
+            <Lock size={16} />
+            <span className="text-sm">Changer mot de passe</span>
           </button>
           <button
             onClick={handleLogout}
             className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-red-600/80 hover:bg-red-600 text-white rounded-lg font-medium transition-all"
           >
-            
-            <span className="">Déconnexion</span>
+            <LogOut size={16} />
+            <span className="text-sm">Déconnexion</span>
           </button>
         </div>
       </aside>
 
-      <main className={`flex-1 min-h-screen transition-all duration-300`}>
+      {/* ── MAIN ── */}
+      <main className="flex-1 min-h-screen transition-all duration-300 flex flex-col">
+
+        {/* Topbar visible sur mobile uniquement */}
         <div className="lg:hidden flex items-center justify-between p-4 bg-slate-900 border-b border-white/10">
           <button
             onClick={() => setSidebarOpen(true)}
@@ -357,20 +392,20 @@ function Layout({ user, children }) {
           <img src="/logo.png" alt="ArisManager" className="h-8" />
           <span className="text-white font-semibold text-sm">ArisManager-Employee</span>
         </div>
-        <div className="hidden lg:flex items-center justify-between px-6 py-4 bg-slate-900 border-b border-white/10">
-          <img src="/logo.png" alt="ArisManager" className="h-10" />
-          <span className="text-white font-semibold text-lg">ArisManager-Employee</span>
-          <div className="w-10"></div>
-        </div>
-        <div className="p-4 md:p-6 lg:p-8">
+
+        {/* Contenu */}
+        <div className="flex-1 p-4 md:p-6 lg:p-8">
           {children}
         </div>
       </main>
 
+      {/* ── TOAST ── */}
       {notification && (
-        <div className={`fixed top-6 right-6 z-[9999] flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl animate-slide-in min-w-[280px] ${
-          notification.type === 'success' ? 'bg-green-600' : 'bg-red-600'
-        } text-white`}>
+        <div
+          className={`fixed top-6 right-6 z-[9999] flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl animate-slide-in min-w-[280px] ${
+            notification.type === 'success' ? 'bg-green-600' : 'bg-red-600'
+          } text-white`}
+        >
           <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
             {notification.type === 'success' ? <Check size={20} /> : <X size={20} />}
           </div>
@@ -378,18 +413,30 @@ function Layout({ user, children }) {
         </div>
       )}
 
+      {/* ── MODAL MOT DE PASSE ── */}
       {showPasswordModal && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowPasswordModal(false)}>
-          <div className="bg-slate-800 rounded-xl w-full max-w-md border border-white/20" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={() => setShowPasswordModal(false)}
+        >
+          <div
+            className="bg-slate-800 rounded-xl w-full max-w-md border border-white/20"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="p-6 border-b border-white/20 flex items-center justify-between">
               <h3 className="text-xl font-semibold text-white flex items-center gap-2">
                 <Lock size={22} /> Changer le mot de passe
               </h3>
-              <button onClick={() => setShowPasswordModal(false)} className="text-white/50 hover:text-white">
+              <button
+                onClick={() => setShowPasswordModal(false)}
+                className="text-white/50 hover:text-white"
+              >
                 <X size={24} />
               </button>
             </div>
+
             <form onSubmit={handlePasswordChange} className="p-6 space-y-4">
+              {/* Mot de passe actuel */}
               <div>
                 <label className="block text-white/70 text-sm mb-2">Mot de passe actuel</label>
                 <div className="relative">
@@ -410,6 +457,8 @@ function Layout({ user, children }) {
                   </button>
                 </div>
               </div>
+
+              {/* Nouveau mot de passe */}
               <div>
                 <label className="block text-white/70 text-sm mb-2">Nouveau mot de passe</label>
                 <div className="relative">
@@ -430,6 +479,8 @@ function Layout({ user, children }) {
                   </button>
                 </div>
               </div>
+
+              {/* Confirmation */}
               <div>
                 <label className="block text-white/70 text-sm mb-2">Confirmer le nouveau mot de passe</label>
                 <div className="relative">
@@ -450,11 +501,15 @@ function Layout({ user, children }) {
                   </button>
                 </div>
               </div>
+
+              {/* Erreur */}
               {passwordError && (
                 <div className="bg-red-500/20 border border-red-500/50 text-red-300 px-4 py-3 rounded-lg text-sm">
                   {passwordError}
                 </div>
               )}
+
+              {/* Actions */}
               <div className="flex justify-end gap-3 pt-4">
                 <button
                   type="button"

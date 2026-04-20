@@ -94,11 +94,6 @@ function Login({ setUser }) {
           </button>
         </form>
 
-        <div className="mt-6 sm:mt-8 text-center text-xs sm:text-sm text-white/50 space-y-1">
-          <p>Comptes par défaut:</p>
-          <p className="font-mono text-white/70">ARIS-0001 à ARIS-0005</p>
-          <p>Mot de passe: <span className="font-mono text-white/70">password123</span></p>
-        </div>
       </div>
     </div>
   );
