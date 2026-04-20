@@ -289,9 +289,9 @@ function AdminEmployes() {
           <span className="font-medium">{toast.message}</span>
         </div>
       )}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Gestion des Employés</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Gestion des Employés</h1>
           <p className="text-white/70">Total: {employes.length} employé(s)</p>
         </div>
         <button
@@ -299,12 +299,12 @@ function AdminEmployes() {
           className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-all"
         >
           <Plus size={20} />
-          Nouvel Employé
+          <span className="hidden sm:inline">Nouvel</span> Employé
         </button>
       </div>
 
-      <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6">
-        <div className="mb-6">
+      <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-4 md:p-6">
+        <div className="mb-4 md:mb-6">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50" size={20} />
             <input
@@ -317,7 +317,47 @@ function AdminEmployes() {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Version mobile: cartes */}
+        <div className="md:hidden space-y-3">
+          {filteredEmployes.map((emp) => {
+            const photoUrl = getPhotoUrl(emp);
+            return (
+              <div key={emp.id} className="bg-white/5 rounded-lg p-4 border border-white/10">
+                <div className="flex items-start gap-3">
+                  {photoUrl ? (
+                    <img src={photoUrl} alt="" className="w-12 h-12 rounded-full object-cover" onError={handlePhotoError} />
+                  ) : (
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+                      {getInitials(emp.nom, emp.prenom)}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white font-semibold">{emp.prenom} {emp.nom}</p>
+                    <p className="text-white/60 text-sm truncate">{emp.email}</p>
+                    <p className="text-blue-400 text-sm">{emp.matricule}</p>
+                  </div>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                  <div className="bg-white/5 rounded p-2">
+                    <p className="text-white/50 text-xs">Poste</p>
+                    <p className="text-white">{emp.poste || '-'}</p>
+                  </div>
+                  <div className="bg-white/5 rounded p-2">
+                    <p className="text-white/50 text-xs">Département</p>
+                    <p className="text-white">{emp.departement || '-'}</p>
+                  </div>
+                </div>
+                <div className="mt-3 flex gap-2">
+                  <button onClick={() => openViewModal(emp)} className="flex-1 py-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded-lg text-sm">Voir</button>
+                  <button onClick={() => openEditModal(emp)} className="flex-1 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm">Modifier</button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Version desktop: table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="text-left text-white/50 border-b border-white/20">
@@ -395,6 +435,7 @@ function AdminEmployes() {
               })}
             </tbody>
           </table>
+        </div>
         </div>
       </div>
 

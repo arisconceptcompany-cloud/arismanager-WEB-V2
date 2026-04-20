@@ -148,21 +148,21 @@ function AdminConges() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Gestion des Congés</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Gestion des Congés</h1>
           <p className="text-white/70">
             {pendingCount > 0 && (
               <span className="text-yellow-400 font-medium">{pendingCount} demande(s) en attente</span>
             )}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {['all', 'en_attente', 'approuve', 'rejete'].map(f => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-4 py-2 rounded-lg transition-colors ${
+              className={`px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm ${
                 filter === f
                   ? 'bg-red-600 text-white'
                   : 'bg-white/10 text-white/70 hover:bg-white/20'
@@ -182,9 +182,9 @@ function AdminConges() {
           </div>
         ) : (
           filteredConges.map(conge => (
-            <div key={conge.id} className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-4">
+            <div key={conge.id} className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-4 md:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                <div className="flex items-start gap-3 md:gap-4">
                   {(() => {
                     const photoUrl = getPhotoUrl(conge.employe_id);
                     return (
@@ -193,12 +193,12 @@ function AdminConges() {
                           <img 
                             src={photoUrl} 
                             alt="" 
-                            className="w-12 h-12 rounded-full object-cover"
+                            className="w-10 md:w-12 rounded-full object-cover"
                             onError={handlePhotoError}
                           />
                         ) : null}
                         <div 
-                          className={`w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold ${photoUrl ? 'hidden' : ''}`}
+                          className={`w-10 md:w-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold ${photoUrl ? 'hidden' : ''}`}
                         >
                           {conge.employe?.prenom?.[0]}{conge.employe?.nom?.[0]}
                         </div>
@@ -206,49 +206,49 @@ function AdminConges() {
                     );
                   })()}
                   <div>
-                    <h3 className="text-white font-semibold text-lg">{getEmployeName(conge.employe_id)}</h3>
+                    <h3 className="text-white font-semibold">{getEmployeName(conge.employe_id)}</h3>
                     <p className="text-white/50 text-sm">{conge.employe?.matricule} - {conge.employe?.poste}</p>
                   </div>
                 </div>
                 {getStatusBadge(conge.statut)}
               </div>
 
-              <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white/5 rounded-lg p-4">
-                  <p className="text-white/50 text-sm mb-1">Type de congé</p>
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+                <div className="bg-white/5 rounded-lg p-3 md:p-4">
+                  <p className="text-white/50 text-xs md:text-sm mb-1">Type de congé</p>
                   <p className="text-white font-medium">{getTypeLabel(conge.type_conge)}</p>
                 </div>
-                <div className="bg-white/5 rounded-lg p-4">
-                  <p className="text-white/50 text-sm mb-1">Période</p>
-                  <p className="text-white font-medium">
+                <div className="bg-white/5 rounded-lg p-3 md:p-4">
+                  <p className="text-white/50 text-xs md:text-sm mb-1">Période</p>
+                  <p className="text-white font-medium text-sm">
                     {new Date(conge.date_debut).toLocaleDateString('fr-FR')} - {new Date(conge.date_fin).toLocaleDateString('fr-FR')}
                   </p>
                 </div>
-                <div className="bg-white/5 rounded-lg p-4">
-                  <p className="text-white/50 text-sm mb-1">Jours demandés</p>
+                <div className="bg-white/5 rounded-lg p-3 md:p-4">
+                  <p className="text-white/50 text-xs md:text-sm mb-1">Jours demandés</p>
                   <p className="text-white font-medium">{conge.jours_demandes} jour(s)</p>
                 </div>
               </div>
 
               {conge.motif && (
-                <div className="mt-4 bg-white/5 rounded-lg p-4">
+                <div className="mt-4 bg-white/5 rounded-lg p-3 md:p-4">
                   <p className="text-white/50 text-sm mb-1">Motif</p>
                   <p className="text-white">{conge.motif}</p>
                 </div>
               )}
 
               {conge.statut === 'en_attente' && (
-                <div className="mt-4 flex justify-end gap-3">
+                <div className="mt-4 flex flex-col sm:flex-row justify-end gap-2 md:gap-3">
                   <button
                     onClick={() => handleAction(conge.id, 'rejeter')}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg transition-colors"
+                    className="flex items-center justify-center gap-2 px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg transition-colors"
                   >
                     <X size={18} />
                     Rejeter
                   </button>
                   <button
                     onClick={() => handleAction(conge.id, 'approuver')}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+                    className="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
                   >
                     <Check size={18} />
                     Approuver

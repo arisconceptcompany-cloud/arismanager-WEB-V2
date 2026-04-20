@@ -441,31 +441,32 @@ function Chat() {
         </div>
       )}
 
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex flex-col sm:flex-row items-start sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Messages</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Messages</h1>
           <p className="text-white/70">Discutez avec vos collègues</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-2 sm:gap-3">
           <button 
             onClick={openGroupChat}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-all"
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-all text-sm sm:text-base"
           >
             <Users size={18} />
-            Groupe
+            <span className="hidden sm:inline">Groupe</span>
           </button>
           <button 
             onClick={() => setShowContacts(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all"
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all text-sm sm:text-base"
           >
             <MessageCircle size={18} />
-            Nouveau message
+            <span className="hidden sm:inline">Nouveau message</span>
           </button>
         </div>
       </div>
 
       <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden h-[calc(100%-80px)] flex">
-        <div className="w-80 border-r border-white/20 flex flex-col">
+        {/* Liste conversations - hidden on mobile when conversation selected */}
+        <div className={`${selectedConversation ? 'hidden md:flex' : 'flex'} w-full md:w-80 border-r border-white/20 flex-col`}>
           <div className="p-4 border-b border-white/20">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50" size={18} />
@@ -539,11 +540,19 @@ function Chat() {
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col">
+        {/* Zone messages */}
+        <div className={`${selectedConversation ? 'flex flex-col w-full' : 'hidden md:flex'} flex-1 flex-col">
           {selectedConversation ? (
             <>
               <div className="p-4 border-b border-white/20 bg-white/5">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 md:gap-3">
+                  {/* Bouton retour mobile */}
+                  <button
+                    onClick={() => { setSelectedConversation(null); setSelectedUser(null); }}
+                    className="md:hidden p-2 hover:bg-white/10 rounded-lg text-white"
+                  >
+                    <X size={20} />
+                  </button>
                   {selectedUser?.isGroup ? (
                     <div className="w-10 h-10 rounded-full flex items-center justify-center text-white bg-gradient-to-br from-purple-500 to-pink-600">
                       <Users size={18} />

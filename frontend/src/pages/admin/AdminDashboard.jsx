@@ -123,71 +123,71 @@ function AdminDashboard() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-white mb-2">Tableau de bord Admin</h1>
-      <p className="text-white/70 mb-6">Bienvenue, {user?.prenom} {user?.nom}</p>
+      <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Tableau de bord Admin</h1>
+      <p className="text-white/70 mb-4 md:mb-6">Bienvenue, {user?.prenom} {user?.nom}</p>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
-        <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 mb-6 md:mb-8">
+        <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-4 md:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white/50 text-sm">Total Employés</p>
-              <p className="text-3xl font-bold text-white">{stats.totalEmployes}</p>
+              <p className="text-white/50 text-xs md:text-sm">Total Employés</p>
+              <p className="text-2xl md:text-3xl font-bold text-white">{stats.totalEmployes}</p>
             </div>
-            <Users size={40} className="text-blue-400 opacity-50" />
+            <Users size={24} md:size={40} className="text-blue-400 opacity-50" />
           </div>
         </div>
-        <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6">
+        <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-4 md:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white/50 text-sm">Demandes Congé</p>
-              <p className="text-3xl font-bold text-yellow-400">{stats.pendingConges}</p>
+              <p className="text-white/50 text-xs md:text-sm">Demandes Congé</p>
+              <p className="text-2xl md:text-3xl font-bold text-yellow-400">{stats.pendingConges}</p>
             </div>
-            <Clock size={40} className="text-yellow-400 opacity-50" />
+            <Clock size={24} md:size={40} className="text-yellow-400 opacity-50" />
           </div>
         </div>
-        <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6">
+        <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-4 md:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white/50 text-sm">Total Projets</p>
-              <p className="text-3xl font-bold text-blue-400">{stats.totalProjects}</p>
+              <p className="text-white/50 text-xs md:text-sm">Total Projets</p>
+              <p className="text-2xl md:text-3xl font-bold text-blue-400">{stats.totalProjects}</p>
             </div>
-            <FolderKanban size={40} className="text-blue-400 opacity-50" />
+            <FolderKanban size={24} md:size={40} className="text-blue-400 opacity-50" />
           </div>
         </div>
-        <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6">
+        <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-4 md:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white/50 text-sm">En attente réponse</p>
-              <p className="text-3xl font-bold text-amber-400">{stats.enAttenteProjects}</p>
+              <p className="text-white/50 text-xs md:text-sm">En attente réponse</p>
+              <p className="text-2xl md:text-3xl font-bold text-amber-400">{stats.enAttenteProjects}</p>
             </div>
-            <Clock size={40} className="text-amber-400 opacity-50" />
+            <Clock size={24} md:size={40} className="text-amber-400 opacity-50" />
           </div>
         </div>
-        <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6">
+        <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-4 md:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white/50 text-sm">Rapports en attente</p>
-              <p className="text-3xl font-bold text-purple-400">{stats.pendingRapports}</p>
+              <p className="text-white/50 text-xs md:text-sm">Rapports en attente</p>
+              <p className="text-2xl md:text-3xl font-bold text-purple-400">{stats.pendingRapports}</p>
             </div>
-            <FileText size={40} className="text-purple-400 opacity-50" />
+            <FileText size={24} md:size={40} className="text-purple-400 opacity-50" />
           </div>
         </div>
       </div>
 
-      <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+      <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-4 md:p-6">
+        <div className="flex flex-col sm:flex-row items-start sm:justify-between gap-4 mb-4 md:mb-6">
+          <h2 className="text-lg md:text-xl font-semibold text-white flex items-center gap-2">
             <Calendar size={24} />
             Mon Calendrier de Présence
           </h2>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <button
               onClick={prevMonth}
               className="px-3 py-1 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-colors"
             >
               ←
             </button>
-            <span className="text-white font-medium min-w-[150px] text-center capitalize">
+            <span className="text-white font-medium min-w-[120px] sm:min-w-[150px] text-center capitalize text-sm sm:text-base">
               {monthName}
             </span>
             <button

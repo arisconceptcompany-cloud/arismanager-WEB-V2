@@ -169,7 +169,7 @@ function AdminSalaires() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Gestion des Salaires</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Gestion des Salaires</h1>
           <p className="text-white/70">Gérez les salaires des employés</p>
         </div>
       </div>
@@ -196,23 +196,25 @@ function AdminSalaires() {
       </div>
 
       <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="text-left text-white/50 border-b border-white/20 bg-white/5">
-              <th className="p-4">Employé</th>
-              <th className="p-4">Période</th>
-              <th className="p-4">Salaire Base</th>
-              <th className="p-4">Primes</th>
-              <th className="p-4">Déductions</th>
-              <th className="p-4">Salaire Net</th>
-              <th className="p-4">Statut</th>
-              <th className="p-4 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredSalaires.map(salaire => (
-              <tr key={salaire.id} className="border-b border-white/10 hover:bg-white/5">
-                <td className="p-4">
+        {/* Header desktop */}
+        <div className="hidden md:grid md:grid-cols-8 text-left text-white/50 border-b border-white/20 bg-white/5 p-4 gap-4">
+          <div className="md:col-span-1">Employé</div>
+          <div className="md:col-span-1">Période</div>
+          <div className="md:col-span-1">Salaire Base</div>
+          <div className="md:col-span-1">Primes</div>
+          <div className="md:col-span-1">Déductions</div>
+          <div className="md:col-span-1">Salaire Net</div>
+          <div className="md:col-span-1">Statut</div>
+          <div className="md:col-span-1 text-right">Actions</div>
+        </div>
+        
+        {/* Contenu mobile et desktop */}
+        <div className="divide-y divide-white/10">
+          {filteredSalaires.map(salaire => (
+            <div key={salaire.id} className="p-4 hover:bg-white/5">
+              {/* Mobile card */}
+              <div className="md:hidden space-y-3">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     {(() => {
                       const photoUrl = getPhotoUrl(salaire.employe_id);
@@ -220,42 +222,83 @@ function AdminSalaires() {
                       return (
                         <>
                           {photoUrl ? (
-                            <img 
-                              src={photoUrl} 
-                              alt="" 
-                              className="w-8 h-8 rounded-full object-cover"
-                              onError={handlePhotoError}
-                            />
-                          ) : null}
-                          <div 
-                            className={`w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold ${photoUrl ? 'hidden' : ''}`}
-                          >
-                            {emp?.prenom?.[0]}{emp?.nom?.[0]}
-                          </div>
+                            <img src={photoUrl} alt="" className="w-10 h-10 rounded-full object-cover" onError={handlePhotoError} />
+                          ) : (
+                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                              {emp?.prenom?.[0]}{emp?.nom?.[0]}
+                            </div>
+                          )}
                         </>
                       );
                     })()}
-                    <span className="text-white">{getEmployeName(salaire.employe_id)}</span>
+                    <div>
+                      <p className="text-white font-medium">{getEmployeName(salaire.employe_id)}</p>
+                      <p className="text-white/50 text-sm">{formatMonth(salaire.mois, salaire.annee)}</p>
+                    </div>
                   </div>
-                </td>
-                <td className="p-4 text-white">{formatMonth(salaire.mois, salaire.annee)}</td>
-                <td className="p-4 text-white">{formatCurrency(salaire.salaire_base)}</td>
-                <td className="p-4 text-green-400">+{formatCurrency(salaire.primes || 0)}</td>
-                <td className="p-4 text-red-400">-{formatCurrency(salaire.deductions || 0)}</td>
-                <td className="p-4 text-white font-semibold">{formatCurrency(salaire.salaire_net)}</td>
-                <td className="p-4">{getStatusBadge(salaire.statut_paiement)}</td>
-                <td className="p-4 text-right">
-                  <button
-                    onClick={() => openEditModal(salaire)}
-                    className="p-2 hover:bg-white/10 rounded-lg text-white/70 hover:text-white transition-colors"
-                  >
+                  {getStatusBadge(salaire.statut_paiement)}
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-sm">
+                  <div className="bg-white/5 rounded-lg p-2">
+                    <p className="text-white/50 text-xs">Base</p>
+                    <p className="text-white font-medium">{formatCurrency(salaire.salaire_base)}</p>
+                  </div>
+                  <div className="bg-white/5 rounded-lg p-2">
+                    <p className="text-white/50 text-xs">Primes</p>
+                    <p className="text-green-400">+{formatCurrency(salaire.primes || 0)}</p>
+                  </div>
+                  <div className="bg-white/5 rounded-lg p-2">
+                    <p className="text-white/50 text-xs">Déductions</p>
+                    <p className="text-red-400">-{formatCurrency(salaire.deductions || 0)}</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-white/50 text-sm">Net à payer</p>
+                  <p className="text-white font-bold text-lg">{formatCurrency(salaire.salaire_net)}</p>
+                </div>
+                <button
+                  onClick={() => openEditModal(salaire)}
+                  className="w-full py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  <Edit size={16} /> Modifier
+                </button>
+              </div>
+
+              {/* Desktop row */}
+              <div className="hidden md:grid md:grid-cols-8 items-center gap-4">
+                <div className="md:col-span-1 flex items-center gap-3">
+                  {(() => {
+                    const photoUrl = getPhotoUrl(salaire.employe_id);
+                    const emp = employes.find(e => e.id === salaire.employe_id);
+                    return (
+                      <>
+                        {photoUrl ? (
+                          <img src={photoUrl} alt="" className="w-8 h-8 rounded-full object-cover" onError={handlePhotoError} />
+                        ) : (
+                          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                            {emp?.prenom?.[0]}{emp?.nom?.[0]}
+                          </div>
+                        )}
+                        <span className="text-white">{getEmployeName(salaire.employe_id)}</span>
+                      </>
+                    );
+                  })()}
+                </div>
+                <div className="md:col-span-1 text-white">{formatMonth(salaire.mois, salaire.annee)}</div>
+                <div className="md:col-span-1 text-white">{formatCurrency(salaire.salaire_base)}</div>
+                <div className="md:col-span-1 text-green-400">+{formatCurrency(salaire.primes || 0)}</div>
+                <div className="md:col-span-1 text-red-400">-{formatCurrency(salaire.deductions || 0)}</div>
+                <div className="md:col-span-1 text-white font-semibold">{formatCurrency(salaire.salaire_net)}</div>
+                <div className="md:col-span-1">{getStatusBadge(salaire.statut_paiement)}</div>
+                <div className="md:col-span-1 text-right">
+                  <button onClick={() => openEditModal(salaire)} className="p-2 hover:bg-white/10 rounded-lg text-white/70 hover:text-white transition-colors">
                     <Edit size={18} />
                   </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {showModal && editingSalaire && (

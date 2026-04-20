@@ -185,19 +185,19 @@ function AdminPresences() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col lg:flex-row items-start lg:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Gestion des Présences</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Gestion des Présences</h1>
           <p className="text-white/70">Tableau de présence journalier</p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
           <button
             onClick={handleSync}
             disabled={syncing}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg transition-colors text-sm"
           >
             <RefreshCw size={18} className={syncing ? 'animate-spin' : ''} />
-            {syncing ? 'Sync...' : 'Sync PresenceAris'}
+            {syncing ? 'Sync...' : 'Sync'}
           </button>
           <div className="flex items-center gap-2 bg-white/10 rounded-lg p-1">
             <button
@@ -206,8 +206,8 @@ function AdminPresences() {
             >
               <ChevronLeft size={20} />
             </button>
-            <div className="text-center px-4">
-              <span className="text-white font-medium capitalize">
+            <div className="text-center px-2 sm:px-4">
+              <span className="text-white font-medium capitalize text-sm sm:text-base">
                 {dateStr}
               </span>
             </div>
@@ -220,14 +220,14 @@ function AdminPresences() {
           </div>
           <button
             onClick={goToToday}
-            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+            className="px-3 sm:px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm"
           >
             Aujourd'hui
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center">
@@ -270,7 +270,52 @@ function AdminPresences() {
       </div>
 
       <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Version mobile: cartes */}
+        <div className="md:hidden p-4 space-y-3">
+          {employes.map((employe) => {
+            const presence = getPresenceForEmploye(employe.id);
+            const hasRetard = calculateRetard(presence?.heure_arrivee) !== '-';
+            const photoUrl = getPhotoUrl(employe);
+            return (
+              <div key={employe.id} className="bg-white/5 rounded-lg p-4 border border-white/10">
+                <div className="flex items-center gap-3 mb-3">
+                  {photoUrl ? (
+                    <img src={photoUrl} alt="" className="w-10 h-10 rounded-full object-cover" onError={(e) => handlePhotoError(e, employe)} />
+                  ) : (
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                      {employe.prenom?.[0]}{employe.nom?.[0]}
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-white font-medium">{employe.prenom} {employe.nom}</p>
+                    <p className="text-white/50 text-sm">{employe.matricule} - {employe.poste || '-'}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="bg-white/5 rounded p-2">
+                    <p className="text-white/50 text-xs">Arrivée</p>
+                    <p className="text-white font-mono">{formatTime(presence?.heure_arrivee) || '-'}</p>
+                  </div>
+                  <div className="bg-white/5 rounded p-2">
+                    <p className="text-white/50 text-xs">Sortie</p>
+                    <p className="text-white font-mono">{formatTime(presence?.heure_depart) || '-'}</p>
+                  </div>
+                  <div className="bg-white/5 rounded p-2">
+                    <p className="text-white/50 text-xs">Retard</p>
+                    <p className={hasRetard ? 'text-red-400' : 'text-green-400'}>{hasRetard ? calculateRetard(presence?.heure_arrivee) : '-'}</p>
+                  </div>
+                  <div className="bg-white/5 rounded p-2">
+                    <p className="text-white/50 text-xs">Heures</p>
+                    <p className="text-white font-mono">{calculateWorkHours(presence?.heure_arrivee, presence?.heure_depart) || '-'}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Version desktop: table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="bg-white/5 border-b border-white/20">
@@ -389,9 +434,10 @@ function AdminPresences() {
             </tbody>
           </table>
         </div>
+        </div>
       </div>
 
-      <div className="mt-4 flex items-center gap-6 text-sm text-white/50">
+      <div className="mt-4 flex flex-wrap items-center gap-4 sm:gap-6 text-sm text-white/50">
         <div className="flex items-center gap-2">
           <span className="w-3 h-3 bg-red-500/20 rounded-full"></span>
           <span>Retard</span>

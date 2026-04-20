@@ -82,10 +82,10 @@ function Pointages() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row items-start sm:justify-between gap-4 mb-6 md:mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Mes Pointages</h1>
-          <p className="text-white/70">Historique de vos heures de travail (Horaire: 8h00 - 17h00)</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Mes Pointages</h1>
+          <p className="text-white/70 text-sm">Historique de vos heures de travail (Horaire: 8h00 - 17h00)</p>
         </div>
         <button
           onClick={handleSync}
@@ -97,61 +97,61 @@ function Pointages() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
-              <CheckCircle className="text-green-400" size={24} />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
+        <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 md:p-6 border border-white/20">
+          <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
+            <div className="w-10 md:w-12 h-10 md:h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
+              <CheckCircle className="text-green-400" size={20} md:size={24} />
             </div>
             <div>
-              <h3 className="text-sm text-white/70">Jours présents</h3>
-              <div className="text-3xl font-bold text-white">{totalPresents}</div>
+              <h3 className="text-xs md:text-sm text-white/70">Jours présents</h3>
+              <div className="text-2xl md:text-3xl font-bold text-white">{totalPresents}</div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center">
-              <Clock className="text-red-400" size={24} />
+        <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 md:p-6 border border-white/20">
+          <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
+            <div className="w-10 md:w-12 h-10 md:h-12 bg-red-500/20 rounded-xl flex items-center justify-center">
+              <Clock className="text-red-400" size={20} md:size={24} />
             </div>
             <div>
-              <h3 className="text-sm text-white/70">Jours de retard</h3>
-              <div className="text-3xl font-bold text-white">{totalRetards}</div>
+              <h3 className="text-xs md:text-sm text-white/70">Jours de retard</h3>
+              <div className="text-2xl md:text-3xl font-bold text-white">{totalRetards}</div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
-              <TrendingUp className="text-blue-400" size={24} />
+        <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 md:p-6 border border-white/20">
+          <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
+            <div className="w-10 md:w-12 h-10 md:h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
+              <TrendingUp className="text-blue-400" size={20} md:size={24} />
             </div>
             <div>
-              <h3 className="text-sm text-white/70">Taux de présence</h3>
-              <div className="text-3xl font-bold text-white">
+              <h3 className="text-xs md:text-sm text-white/70">Taux de présence</h3>
+              <div className="text-2xl md:text-3xl font-bold text-white">
                 {totalJours > 0 ? ((totalPresents / totalJours) * 100).toFixed(1) : 0}%
               </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
-              <Clock className="text-purple-400" size={24} />
+        <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 md:p-6 border border-white/20">
+          <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
+            <div className="w-10 md:w-12 h-10 md:h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
+              <Clock className="text-purple-400" size={20} md:size={24} />
             </div>
             <div>
-              <h3 className="text-sm text-white/70">Total pointages</h3>
-              <div className="text-3xl font-bold text-white">{pointages.length}</div>
+              <h3 className="text-xs md:text-sm text-white/70">Total pointages</h3>
+              <div className="text-2xl md:text-3xl font-bold text-white">{pointages.length}</div>
             </div>
           </div>
         </div>
       </div>
 
       <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden">
-        <div className="p-6 border-b border-white/20">
-          <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+        <div className="p-4 md:p-6 border-b border-white/20">
+          <h2 className="text-lg md:text-xl font-semibold text-white flex items-center gap-2">
             <Clock size={24} />
             Historique des pointages
           </h2>
@@ -261,11 +261,11 @@ function Pointages() {
         )}
       </div>
 
-      <div className="mt-6 bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
+      <div className="mt-4 md:mt-6 bg-white/10 backdrop-blur-md rounded-xl p-4 md:p-6 border border-white/20">
         <h3 className="text-lg font-semibold text-white mb-4">Légende des horaires</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
+            <div className="w-10 md:w-12 h-10 md:h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
               <Clock size={20} className="text-green-400" />
             </div>
             <div>
@@ -274,7 +274,7 @@ function Pointages() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-amber-500/20 rounded-lg flex items-center justify-center">
+            <div className="w-10 md:w-12 h-10 md:h-12 bg-amber-500/20 rounded-lg flex items-center justify-center">
               <Clock size={20} className="text-amber-400" />
             </div>
             <div>
@@ -283,7 +283,7 @@ function Pointages() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center">
+            <div className="w-10 md:w-12 h-10 md:h-12 bg-purple-500/20 rounded-lg flex items-center justify-center">
               <Clock size={20} className="text-purple-400" />
             </div>
             <div>
