@@ -24,7 +24,10 @@ function Salaires() {
     }
   };
 
-  const formatMontant = (montant) => new Intl.NumberFormat('fr-MG', { style: 'currency', currency: 'MGA' }).format(montant);
+  const formatMontant = (montant) => {
+    const num = parseFloat(montant) || 0;
+    return new Intl.NumberFormat('fr-MG', { style: 'currency', currency: 'MGA' }).format(num);
+  };
   const getMoisLabel = (mois) => ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'][mois - 1] || '';
 
   if (loading) {

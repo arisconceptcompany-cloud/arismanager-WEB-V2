@@ -226,7 +226,7 @@ const handlePhotoChange = async (e) => {
                 <Calendar size={14} /> Date d'embauche
               </label>
               <span className="text-white font-semibold text-lg">
-                {profile?.date_embuche ? new Date(profile.date_embauche).toLocaleDateString('fr-FR') : '-'}
+                {profile?.date_embauche ? new Date(profile.date_embauche).toLocaleDateString('fr-FR') : '-'}
               </span>
             </div>
             
