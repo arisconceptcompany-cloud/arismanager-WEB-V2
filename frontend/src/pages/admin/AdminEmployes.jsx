@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, Search, Plus, Edit, Trash2, X, User, Mail, Phone, MapPin, Briefcase, Building, Calendar, Shield } from 'lucide-react';
+import { Users, Search, Plus, Edit, Trash2, X, User, Mail, Phone, MapPin, Briefcase, Building, Calendar, Shield, Check, AlertTriangle } from 'lucide-react';
 import api, { DEFAULT_AVATAR } from '../../services/api';
 
 function AdminEmployes() {
@@ -9,9 +9,14 @@ function AdminEmployes() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [cinError, setCinError] = useState('');
+  const [cnapsError, setCnapsError] = useState('');
   const [selectedEmploye, setSelectedEmploye] = useState(null);
   const [editingEmploye, setEditingEmploye] = useState(null);
   const [photoCache, setPhotoCache] = useState({});
+  const [toast, setToast] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [employeToDelete, setEmployeToDelete] = useState(null);
   const [formData, setFormData] = useState({
     matricule: '',
     nom: '',
@@ -27,6 +32,32 @@ function AdminEmployes() {
     num_cin: '',
     num_cnaps: ''
   });
+
+  const showToast = (type, message) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 4000);
+  };
+
+  const validateCIN = (cin) => {
+    const cleaned = cin.replace(/\s/g, '');
+    return /^\d{12}$/.test(cleaned);
+  };
+
+  const validateCNAPS = (cnaps) => {
+    return /^\d{11}$/.test(cnaps.replace(/\s/g, ''));
+  };
+
+  const formatCIN = (value) => {
+    const cleaned = value.replace(/\s/g, '').replace(/\D/g, '').slice(0, 12);
+    if (cleaned.length <= 3) return cleaned;
+    if (cleaned.length <= 6) return `${cleaned.slice(0,3)} ${cleaned.slice(3)}`;
+    if (cleaned.length <= 9) return `${cleaned.slice(0,3)} ${cleaned.slice(3,6)} ${cleaned.slice(6)}`;
+    return `${cleaned.slice(0,3)} ${cleaned.slice(3,6)} ${cleaned.slice(6,9)} ${cleaned.slice(9,12)}`;
+  };
+
+  const formatCNAPS = (value) => {
+    return value.replace(/\s/g, '').replace(/\D/g, '').slice(0, 11);
+  };
 
   useEffect(() => {
     fetchEmployes();
@@ -136,28 +167,56 @@ function AdminEmployes() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    setCinError('');
+    setCnapsError('');
+    
+    if (formData.num_cin && !validateCIN(formData.num_cin)) {
+      setCinError('Le CIN doit contenir exactement 12 chiffres (format: XXX XXX XXX XXX)');
+      return;
+    }
+    
+    if (formData.num_cnaps && !validateCNAPS(formData.num_cnaps)) {
+      setCnapsError('Le CNAPS doit contenir exactement 11 chiffres');
+      return;
+    }
+    
     try {
+      const payload = { ...formData };
+      if (formData.num_cin) payload.num_cin = formData.num_cin.replace(/\s/g, '');
+      if (formData.num_cnaps) payload.num_cnaps = formData.num_cnaps.replace(/\s/g, '');
+      
       if (editingEmploye) {
-        await api.put(`/admin/employes/${editingEmploye.id}`, formData);
+        await api.put(`/admin/employes/${editingEmploye.id}`, payload);
+        showToast('success', 'Employé modifié avec succès');
       } else {
-        await api.post('/admin/employes', formData);
+        await api.post('/admin/employes', payload);
+        showToast('success', 'Employé ajouté avec succès');
       }
       setShowModal(false);
       fetchEmployes();
     } catch (error) {
       console.error('Erreur sauvegarde:', error);
-      alert('Erreur lors de la sauvegarde');
+      showToast('error', 'Erreur lors de la sauvegarde');
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cet employé?')) return;
+  const confirmDelete = (employe) => {
+    setEmployeToDelete(employe);
+    setShowDeleteModal(true);
+  };
+
+  const handleDelete = async () => {
+    if (!employeToDelete) return;
     try {
-      await api.delete(`/admin/employes/${id}`);
+      await api.delete(`/admin/employes/${employeToDelete.id}`);
+      showToast('success', 'Employé supprimé avec succès');
+      setShowDeleteModal(false);
+      setEmployeToDelete(null);
       fetchEmployes();
     } catch (error) {
       console.error('Erreur suppression:', error);
-      alert('Erreur lors de la suppression');
+      showToast('error', 'Erreur lors de la suppression');
     }
   };
 
@@ -218,6 +277,18 @@ function AdminEmployes() {
 
   return (
     <div>
+      {toast && (
+        <div className={`fixed top-6 right-6 z-[9999] flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl ${
+          toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'
+        } text-white animate-slide-in min-w-[280px]`}>
+          {toast.type === 'success' ? (
+            <Check size={20} />
+          ) : (
+            <AlertTriangle size={20} />
+          )}
+          <span className="font-medium">{toast.message}</span>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold text-white mb-2">Gestion des Employés</h1>
@@ -252,6 +323,8 @@ function AdminEmployes() {
               <tr className="text-left text-white/50 border-b border-white/20">
                 <th className="pb-3 px-2">Employé</th>
                 <th className="pb-3 px-2">Matricule</th>
+                <th className="pb-3 px-2">CIN</th>
+                <th className="pb-3 px-2">CNAPS</th>
                 <th className="pb-3 px-2">Poste</th>
                 <th className="pb-3 px-2">Département</th>
                 <th className="pb-3 px-2">Rôle</th>
@@ -287,6 +360,8 @@ function AdminEmployes() {
                     </div>
                   </td>
                   <td className="py-4 px-2 text-white">{emp.matricule}</td>
+                  <td className="py-4 px-2 text-white/70 text-sm">{emp.num_cin ? emp.num_cin.replace(/(\d{3})(\d{3})(\d{3})(\d{3})/, '$1 $2 $3 $4') : '-'}</td>
+                  <td className="py-4 px-2 text-white/70 text-sm">{emp.num_cnaps || '-'}</td>
                   <td className="py-4 px-2 text-white">{emp.poste || '-'}</td>
                   <td className="py-4 px-2 text-white">{emp.departement || '-'}</td>
                   <td className="py-4 px-2">{getRoleBadge(emp.role)}</td>
@@ -307,7 +382,7 @@ function AdminEmployes() {
                         <Edit size={18} />
                       </button>
                       <button
-                        onClick={() => handleDelete(emp.id)}
+                        onClick={() => confirmDelete(emp)}
                         className="p-2 hover:bg-red-500/20 rounded-lg text-red-400 hover:text-red-300 transition-colors"
                         title="Supprimer"
                       >
@@ -436,14 +511,24 @@ function AdminEmployes() {
                   />
                 </div>
                 <div>
-                  <label className="block text-white/50 text-sm mb-1">N° CIN</label>
+                  <label className="block text-white/50 text-sm mb-1">N° CIN <span className="text-xs text-white/30">(12 chiffres)</span></label>
                   <input
                     type="text"
                     value={formData.num_cin}
-                    onChange={(e) => setFormData({ ...formData, num_cin: e.target.value })}
-                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-red-500"
-                    placeholder="N° CIN"
+                    onChange={(e) => {
+                      const formatted = formatCIN(e.target.value);
+                      setFormData({ ...formData, num_cin: formatted });
+                      setCinError('');
+                    }}
+                    onBlur={() => {
+                      if (formData.num_cin && !validateCIN(formData.num_cin)) {
+                        setCinError('Format invalide. Utilisez: XXX XXX XXX XXX');
+                      }
+                    }}
+                    className={`w-full px-3 py-2 bg-white/10 border rounded-lg text-white focus:outline-none focus:border-red-500 ${cinError ? 'border-red-500' : 'border-white/20'}`}
+                    placeholder="XXX XXX XXX XXX"
                   />
+                  {cinError && <p className="text-red-400 text-xs mt-1">{cinError}</p>}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -457,14 +542,24 @@ function AdminEmployes() {
                   />
                 </div>
                 <div>
-                  <label className="block text-white/50 text-sm mb-1">N° CNAPS</label>
+                  <label className="block text-white/50 text-sm mb-1">N° CNAPS <span className="text-xs text-white/30">(11 chiffres)</span></label>
                   <input
                     type="text"
                     value={formData.num_cnaps}
-                    onChange={(e) => setFormData({ ...formData, num_cnaps: e.target.value })}
-                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-red-500"
-                    placeholder="N° CNAPS"
+                    onChange={(e) => {
+                      const formatted = formatCNAPS(e.target.value);
+                      setFormData({ ...formData, num_cnaps: formatted });
+                      setCnapsError('');
+                    }}
+                    onBlur={() => {
+                      if (formData.num_cnaps && !validateCNAPS(formData.num_cnaps)) {
+                        setCnapsError('Format invalide. Le CNAPS doit contenir 11 chiffres');
+                      }
+                    }}
+                    className={`w-full px-3 py-2 bg-white/10 border rounded-lg text-white focus:outline-none focus:border-red-500 ${cnapsError ? 'border-red-500' : 'border-white/20'}`}
+                    placeholder="XXXXXXXXXXX"
                   />
+                  {cnapsError && <p className="text-red-400 text-xs mt-1">{cnapsError}</p>}
                 </div>
               </div>
               <div>
@@ -547,8 +642,58 @@ function AdminEmployes() {
                 </div>
                 <div className="flex items-center gap-3 text-white/70">
                   <Shield size={18} />
-                  <span>{selectedEmploye.num_cnaps || '-'}</span>
+                  <span>{selectedEmploye.num_cnaps ? formatCNAPS(selectedEmploye.num_cnaps) : '-'}</span>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {toast && (
+        <div className={`fixed top-6 right-6 z-[9999] flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl ${
+          toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'
+        } text-white animate-slide-in min-w-[280px]`}>
+          {toast.type === 'success' ? (
+            <Check size={20} />
+          ) : (
+            <AlertTriangle size={20} />
+          )}
+          <span className="font-medium">{toast.message}</span>
+        </div>
+      )}
+
+      {showDeleteModal && employeToDelete && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-800 rounded-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6">
+              <div className="flex items-center justify-center mb-4">
+                <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center">
+                  <AlertTriangle size={32} className="text-red-400" />
+                </div>
+              </div>
+              <h3 className="text-xl font-semibold text-white text-center mb-2">Confirmer la suppression</h3>
+              <p className="text-white/70 text-center mb-6">
+                Êtes-vous sûr de vouloir supprimer l'employé <span className="text-white font-medium">{employeToDelete.prenom} {employeToDelete.nom}</span> ?
+                <br />
+                <span className="text-red-400 text-sm">Cette action est irréversible.</span>
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setEmployeToDelete(null);
+                  }}
+                  className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                >
+                  Supprimer
+                </button>
               </div>
             </div>
           </div>

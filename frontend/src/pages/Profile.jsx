@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { User, Mail, Phone, MapPin, Briefcase, Building2, Calendar, Camera, Upload, Check, X } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Briefcase, Building2, Calendar, Camera, Upload, Check, X, Shield } from 'lucide-react';
 import { employeAPI } from '../services/api';
 import { useUser } from '../context/UserContext';
 
@@ -226,7 +226,25 @@ const handlePhotoChange = async (e) => {
                 <Calendar size={14} /> Date d'embauche
               </label>
               <span className="text-white font-semibold text-lg">
-                {profile?.date_embauche ? new Date(profile.date_embauche).toLocaleDateString('fr-FR') : '-'}
+                {profile?.date_embuche ? new Date(profile.date_embauche).toLocaleDateString('fr-FR') : '-'}
+              </span>
+            </div>
+            
+            <div className="bg-white/10 p-4 rounded-lg">
+              <label className="flex items-center gap-2 text-xs text-white/50 mb-2">
+                <Shield size={14} /> N° CIN
+              </label>
+              <span className="text-white font-semibold text-lg">
+                {profile?.num_cin ? profile.num_cin.replace(/(\d{3})(\d{3})(\d{3})(\d{3})/, '$1 $2 $3 $4') : 'Non renseigné'}
+              </span>
+            </div>
+            
+            <div className="bg-white/10 p-4 rounded-lg">
+              <label className="flex items-center gap-2 text-xs text-white/50 mb-2">
+                <Shield size={14} /> N° CNAPS
+              </label>
+              <span className="text-white font-semibold text-lg">
+                {profile?.num_cnaps || 'Non renseigné'}
               </span>
             </div>
             
