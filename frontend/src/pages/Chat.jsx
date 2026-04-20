@@ -466,7 +466,7 @@ function Chat() {
 
       <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden h-[calc(100%-80px)] flex">
         {/* Liste conversations - hidden on mobile when conversation selected */}
-        <div className={`${selectedConversation ? 'hidden md:flex' : 'flex'} w-full md:w-80 border-r border-white/20 flex-col`}>
+        <div className={selectedConversation ? "hidden md:flex w-full md:w-80 border-r border-white/20 flex-col" : "flex w-full md:w-80 border-r border-white/20 flex-col"}>
           <div className="p-4 border-b border-white/20">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50" size={18} />
@@ -502,9 +502,7 @@ function Chat() {
                       setSelectedConversation(conv);
                       setSelectedUser(otherUser);
                     }}
-                    className={`p-4 cursor-pointer hover:bg-white/10 transition-colors border-b border-white/10 ${
-                      selectedConversation?.id === conv.id ? 'bg-blue-600/20' : ''
-                    }`}
+                    className={"p-4 cursor-pointer hover:bg-white/10 transition-colors border-b border-white/10 " + (selectedConversation?.id === conv.id ? 'bg-blue-600/20' : '')}
                   >
                     <div className="flex items-center gap-3">
                       <div className="relative">
@@ -541,7 +539,7 @@ function Chat() {
         </div>
 
         {/* Zone messages */}
-        <div className={`${selectedConversation ? 'flex flex-col w-full' : 'hidden md:flex'} flex-1 flex-col">
+        <div className={selectedConversation ? "flex flex-col w-full flex-1 flex-col" : "hidden md:flex flex-1 flex-col"}>
           {selectedConversation ? (
             <>
               <div className="p-4 border-b border-white/20 bg-white/5">
@@ -578,27 +576,21 @@ function Chat() {
                   const groupedReactions = groupReactions(reactions);
                   
                   return (
-                    <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} group`}>
+                    <div key={msg.id} className={isMe ? "flex justify-end group" : "flex justify-start group"}>
                       {!isMe && (
                         <div className="mr-2">
                           {renderAvatar(msg.expediteur_id, msg.nom, msg.prenom, 'w-10 h-10')}
                         </div>
                       )}
-                      <div className={`max-w-[75%] ${isMe ? 'order-2' : 'order-1'}`}>
+                      <div className={isMe ? "max-w-[75%] order-2" : "max-w-[75%] order-1"}>
                         {replyMsg && (
-                          <div className={`mb-1 px-3 py-2 rounded-lg text-xs ${
-                            isMe ? 'bg-blue-500/30' : 'bg-white/10'
-                          }`}>
-                            <p className="text-white/50 mb-1">Réponse à {replyMsg.expediteur_id === user.id ? 'vous' : `${replyMsg.prenom} ${replyMsg.nom}`}</p>
+                          <div className={"mb-1 px-3 py-2 rounded-lg text-xs " + (isMe ? 'bg-blue-500/30' : 'bg-white/10')}>
+                            <p className="text-white/50 mb-1">Réponse à {replyMsg.expediteur_id === user.id ? 'vous' : replyMsg.prenom + ' ' + replyMsg.nom}</p>
                             <p className="text-white/80 truncate">{replyMsg.contenu || '📎 Fichier'}</p>
                           </div>
                         )}
                         <div
-                          className={`px-4 py-3 rounded-2xl relative ${
-                            isMe 
-                              ? 'bg-blue-600 text-white rounded-br-md' 
-                              : 'bg-white/20 text-white rounded-bl-md'
-                          }`}
+                          className={"px-4 py-3 rounded-2xl relative " + (isMe ? 'bg-blue-600 text-white rounded-br-md' : 'bg-white/20 text-white rounded-bl-md')}
                         >
                           {!isMe && (
                             <p className="text-xs text-blue-400 mb-1 font-medium">{msg.prenom} {msg.nom}</p>
@@ -683,7 +675,7 @@ function Chat() {
                           )}
                           
                           <div className="flex items-center gap-2 mt-2 flex-wrap">
-                            <p className={`text-xs ${isMe ? 'text-blue-200' : 'text-white/50'}`}>
+                            <p className={isMe ? "text-xs text-blue-200" : "text-xs text-white/50"}>
                               {formatTime(msg.created_at)}
                             </p>
                             {isMe && (
@@ -728,7 +720,7 @@ function Chat() {
                             )}
                           </div>
                           
-                          <div className={`absolute top-1/2 -translate-y-1/2 ${isMe ? '-left-12' : 'right-0'} hidden group-hover:flex gap-1`}>
+                          <div className={isMe ? "absolute top-1/2 -translate-y-1/2 -left-12 hidden group-hover:flex gap-1" : "absolute top-1/2 -translate-y-1/2 right-0 hidden group-hover:flex gap-1"}>
                             <button
                               onClick={() => { setReplyTo(msg); inputRef.current?.focus(); }}
                               className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white"

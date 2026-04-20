@@ -436,7 +436,6 @@ function AdminEmployes() {
             </tbody>
           </table>
         </div>
-        </div>
       </div>
 
       {showModal && (

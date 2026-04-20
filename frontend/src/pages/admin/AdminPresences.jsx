@@ -434,7 +434,6 @@ function AdminPresences() {
             </tbody>
           </table>
         </div>
-        </div>
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-4 sm:gap-6 text-sm text-white/50">
