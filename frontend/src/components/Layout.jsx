@@ -390,7 +390,13 @@ function Layout({ user, children }) {
             <Menu size={24} className="text-white" />
           </button>
           <img src="/logo.png" alt="ArisManager" className="h-8" />
-          <span className="text-white font-semibold text-sm">ArisManager</span>
+          <button
+            onClick={handleLogout}
+            className="p-2 bg-red-600/80 hover:bg-red-600 rounded-lg"
+            title="Déconnexion"
+          >
+            <LogOut size={20} className="text-white" />
+          </button>
         </div>
 
         {/* Contenu */}
