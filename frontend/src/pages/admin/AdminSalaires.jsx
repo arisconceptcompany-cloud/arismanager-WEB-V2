@@ -138,7 +138,7 @@ function AdminSalaires() {
   };
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(amount);
+    return new Intl.NumberFormat('fr-MG', { style: 'currency', currency: 'MGA' }).format(amount);
   };
 
   const getStatusBadge = (statut) => {
