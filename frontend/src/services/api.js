@@ -51,7 +51,8 @@ export const employeAPI = {
 export const pointageAPI = {
   getPointages: (params) => api.get('/pointages', { params }),
   addPointage: (data) => api.post('/pointages', data),
-  getStats: (year) => api.get('/pointages/stats', { params: { year } })
+  getStats: (year) => api.get('/pointages/stats', { params: { year } }),
+  deletePointage: (id) => api.delete(`/pointages/${id}`)
 };
 
 export const congeAPI = {

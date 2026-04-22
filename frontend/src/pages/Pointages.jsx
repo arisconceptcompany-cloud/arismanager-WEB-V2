@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Clock, CheckCircle, TrendingUp, RefreshCw } from 'lucide-react';
+import { Clock, CheckCircle, RefreshCw, Trash2 } from 'lucide-react';
 import api, { pointageAPI } from '../services/api';
 
 function Pointages() {
@@ -36,6 +36,16 @@ function Pointages() {
       console.error('Erreur sync:', error);
     } finally {
       setSyncing(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Voulez-vous vraiment supprimer ce pointage ?')) return;
+    try {
+      await pointageAPI.deletePointage(id);
+      setPointages(pointages.filter(p => p.id !== id));
+    } catch (error) {
+      console.error('Erreur suppression:', error);
     }
   };
 
@@ -97,7 +107,7 @@ function Pointages() {
         </button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 mb-6 md:mb-8">
         <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 md:p-6 border border-white/20">
           <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
             <div className="w-10 md:w-12 h-10 md:h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
@@ -118,20 +128,6 @@ function Pointages() {
             <div>
               <h3 className="text-xs md:text-sm text-white/70">Jours de retard</h3>
               <div className="text-2xl md:text-3xl font-bold text-white">{totalRetards}</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 md:p-6 border border-white/20">
-          <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
-            <div className="w-10 md:w-12 h-10 md:h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
-              <TrendingUp className="text-blue-400" size={20} md:size={24} />
-            </div>
-            <div>
-              <h3 className="text-xs md:text-sm text-white/70">Taux de présence</h3>
-              <div className="text-2xl md:text-3xl font-bold text-white">
-                {totalJours > 0 ? ((totalPresents / totalJours) * 100).toFixed(1) : 0}%
-              </div>
             </div>
           </div>
         </div>
@@ -188,6 +184,12 @@ function Pointages() {
                     }`}>
                       {pointage.statut}
                     </span>
+                    <button
+                      onClick={() => handleDelete(pointage.id)}
+                      className="ml-2 p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div className="bg-white/5 rounded p-2">
@@ -229,6 +231,7 @@ function Pointages() {
                   <th className="px-6 py-4 text-center text-xs font-semibold text-white/70 uppercase tracking-wider">Retard</th>
                   <th className="px-6 py-4 text-center text-xs font-semibold text-white/70 uppercase tracking-wider">Total Travail</th>
                   <th className="px-6 py-4 text-center text-xs font-semibold text-white/70 uppercase tracking-wider">Statut</th>
+                  <th className="px-6 py-4 text-center text-xs font-semibold text-white/70 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/10">
@@ -307,6 +310,14 @@ function Pointages() {
                           {pointage.statut}
                         </span>
                       </td>
+                      <td className="px-6 py-4 text-center">
+                        <button
+                          onClick={() => handleDelete(pointage.id)}
+                          className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </td>
 </tr>
                 );
               })}
@@ -315,39 +326,6 @@ function Pointages() {
           </div>
           </>
         )}
-      </div>
-
-      <div className="mt-4 md:mt-6 bg-white/10 backdrop-blur-md rounded-xl p-4 md:p-6 border border-white/20">
-        <h3 className="text-lg font-semibold text-white mb-4">Légende des horaires</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 md:w-12 h-10 md:h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
-              <Clock size={20} className="text-green-400" />
-            </div>
-            <div>
-              <div className="text-white font-medium">Entrée normale</div>
-              <div className="text-white/50 text-sm">Avant 8h00</div>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="w-10 md:w-12 h-10 md:h-12 bg-amber-500/20 rounded-lg flex items-center justify-center">
-              <Clock size={20} className="text-amber-400" />
-            </div>
-            <div>
-              <div className="text-white font-medium">Entrée en retard</div>
-              <div className="text-white/50 text-sm">Après 8h00</div>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="w-10 md:w-12 h-10 md:h-12 bg-purple-500/20 rounded-lg flex items-center justify-center">
-              <Clock size={20} className="text-purple-400" />
-            </div>
-            <div>
-              <div className="text-white font-medium">Heures de travail</div>
-              <div className="text-white/50 text-sm">8h00 - 17h00 (9h/jour)</div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
