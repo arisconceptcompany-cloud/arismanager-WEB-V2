@@ -163,7 +163,7 @@ function Pointages() {
         ) : (
           <>
             {/* Mobile cards */}
-            <div className="md:hidden space-y-3 p-4">
+            <div className="md:hidden space-y-3 p-4 max-md:block">
               {pointages.map((pointage) => {
                 const { estRetard, retard } = calculerRetard(pointage.heure_arrivee);
                 const totalTravail = calculerHeuresTravail(pointage.heure_arrivee, pointage.heure_depart);
@@ -221,8 +221,8 @@ function Pointages() {
               })}
             </div>
 
-            {/* FIX: "hidden md:block" au lieu de "hidden md:overflow-x-auto" — la table s'affiche maintenant sur desktop */}
-            <div className="hidden md:block overflow-x-auto">
+            {/* Table desktop — cachée uniquement sur mobile */}
+            <div className="max-md:hidden overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-black/30">
                   <tr>
