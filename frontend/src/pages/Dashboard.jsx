@@ -40,14 +40,14 @@ function Dashboard() {
       });
 
       const pointageStats = pointagesStats.data.reduce((acc, curr) => ({
-        presents: acc.presents + (curr.jours_present || 0),
-        retards: acc.retards + (curr.jours_retard || 0),
-        absents: acc.absents + (curr.jours_absent || 0)
+        presents: acc.presents + Number(curr.jours_present || 0),
+        retards: acc.retards + Number(curr.jours_retard || 0),
+        absents: acc.absents + Number(curr.jours_absent || 0)
       }), { presents: 0, retards: 0, absents: 0 });
 
       const congeStats = statsConge.data.reduce((acc, curr) => ({
-        approuves: acc.approuves + (curr.jours_approuves || 0),
-        enAttente: acc.enAttente + (curr.jours_en_attente || 0)
+        approuves: acc.approuves + Number(curr.jours_approuves || 0),
+        enAttente: acc.enAttente + Number(curr.jours_en_attente || 0)
       }), { approuves: 0, enAttente: 0 });
 
       setStats({
@@ -65,16 +65,7 @@ function Dashboard() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-96">
-        <p className="text-white bg-black/50 px-4 py-2 rounded-lg">Chargement...</p>
-      </div>
-    );
-  }
-
-  const joursCalendrier = getJoursCalendrier();
-  const moisLabel = currentMonth.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  const getJoursCalendrier = () => {
     const moisCal = currentMonth.getMonth();
     const anneeCal = currentMonth.getFullYear();
     const premierJour = new Date(anneeCal, moisCal, 1);
@@ -128,6 +119,17 @@ function Dashboard() {
     return jours;
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <p className="text-white bg-black/50 px-4 py-2 rounded-lg">Chargement...</p>
+      </div>
+    );
+  }
+
+  const joursCalendrier = getJoursCalendrier();
+  const moisLabel = currentMonth.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+
   const prevMonth = () => {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
   };
@@ -136,8 +138,7 @@ function Dashboard() {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
   };
 
-  const joursCalendrier = getJoursCalendrier();
-  const moisLabel = currentMonth.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  const totalStats = stats.pointages.presents + stats.pointages.retards + stats.pointages.absents;
 
   return (
     <div>
@@ -266,7 +267,7 @@ function Dashboard() {
             </div>
             Taux de présence (cette année)
           </h2>
-          {stats.pointages.presents + stats.pointages.retards + stats.pointages.absents > 0 ? (
+          {totalStats > 0 ? (
             <div className="flex flex-col lg:flex-row items-center gap-4">
               <div className="w-full max-w-[200px] h-[200px]">
                 <ResponsiveContainer width="100%" height="100%">
