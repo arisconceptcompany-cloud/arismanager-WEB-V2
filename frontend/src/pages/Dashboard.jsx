@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Calendar, Clock, CheckCircle, XCircle, AlertCircle, FolderKanban, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import { pointageAPI, congeAPI, projetAPI } from '../services/api';
 import { useUser } from '../context/UserContext';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
 function Dashboard() {
   const { user, profilePhoto } = useUser();
@@ -72,11 +73,8 @@ function Dashboard() {
     );
   }
 
-  const totalJoursMois = stats.pointagesMois.length;
-  const joursPresents = stats.pointagesMois.filter(p => p.statut === 'present' || p.statut === 'retard').length;
-  const tauxPresence = totalJoursMois > 0 ? ((joursPresents / totalJoursMois) * 100).toFixed(0) : 0;
-
-  const getJoursCalendrier = () => {
+  const joursCalendrier = getJoursCalendrier();
+  const moisLabel = currentMonth.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
     const moisCal = currentMonth.getMonth();
     const anneeCal = currentMonth.getFullYear();
     const premierJour = new Date(anneeCal, moisCal, 1);
@@ -262,35 +260,101 @@ function Dashboard() {
         </div>
 
         <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-4 md:p-5 shadow-xl">
-          <h2 className="text-base md:text-lg font-semibold text-white mb-3 flex items-center gap-2">
+          <h2 className="text-base md:text-lg font-semibold text-white mb-4 flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
               <TrendingUp size={16} className="text-purple-400" />
             </div>
-            Aujourd'hui
+            Taux de présence (cette année)
           </h2>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between bg-green-500/20 rounded-xl px-3 py-2.5 border border-green-500/30">
-              <div className="flex items-center gap-2">
-                <CheckCircle size={16} className="text-green-400" />
-                <span className="text-sm text-white">Présence</span>
+          {stats.pointages.presents + stats.pointages.retards + stats.pointages.absents > 0 ? (
+            <div className="flex flex-col lg:flex-row items-center gap-4">
+              <div className="w-full max-w-[200px] h-[200px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: 'Présents', value: stats.pointages.presents, color: '#22c55e' },
+                        { name: 'Retards', value: stats.pointages.retards, color: '#f59e0b' },
+                        { name: 'Absents', value: stats.pointages.absents, color: '#ef4444' }
+                      ]}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={80}
+                      paddingAngle={3}
+                      dataKey="value"
+                    >
+                      {[
+                        { name: 'Présents', value: stats.pointages.presents, color: '#22c55e' },
+                        { name: 'Retards', value: stats.pointages.retards, color: '#f59e0b' },
+                        { name: 'Absents', value: stats.pointages.absents, color: '#ef4444' }
+                      ].map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        borderRadius: '8px',
+                        color: 'white'
+                      }}
+                      formatter={(value, name) => [`${value} jours`, name]}
+                    />
+                    <Legend
+                      verticalAlign="bottom"
+                      height={36}
+                      wrapperStyle={{ color: 'white', fontSize: '12px' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
-              <span className="text-lg font-bold text-green-400">{tauxPresence}%</span>
-            </div>
-            <div className="flex items-center justify-between bg-blue-500/20 rounded-xl px-3 py-2.5 border border-blue-500/30">
-              <div className="flex items-center gap-2">
-                <Calendar size={16} className="text-blue-400" />
-                <span className="text-sm text-white">Ce mois</span>
+              <div className="flex-1 space-y-3 w-full">
+                <div className="flex items-center justify-between bg-green-500/20 rounded-xl px-4 py-3 border border-green-500/30">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-green-500/30 flex items-center justify-center">
+                      <CheckCircle size={16} className="text-green-400" />
+                    </div>
+                    <span className="text-white font-medium">Présents</span>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xl font-bold text-green-400">{stats.pointages.presents}</div>
+                    <div className="text-[10px] text-green-400/60">jours</div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between bg-amber-500/20 rounded-xl px-4 py-3 border border-amber-500/30">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-amber-500/30 flex items-center justify-center">
+                      <AlertCircle size={16} className="text-amber-400" />
+                    </div>
+                    <span className="text-white font-medium">Retards</span>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xl font-bold text-amber-400">{stats.pointages.retards}</div>
+                    <div className="text-[10px] text-amber-400/60">jours</div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between bg-red-500/20 rounded-xl px-4 py-3 border border-red-500/30">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-red-500/30 flex items-center justify-center">
+                      <XCircle size={16} className="text-red-400" />
+                    </div>
+                    <span className="text-white font-medium">Absents</span>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xl font-bold text-red-400">{stats.pointages.absents}</div>
+                    <div className="text-[10px] text-red-400/60">jours</div>
+                  </div>
+                </div>
               </div>
-              <span className="text-lg font-bold text-blue-400">{joursPresents}/{totalJoursMois}</span>
             </div>
-            <div className="flex items-center justify-between bg-purple-500/20 rounded-xl px-3 py-2.5 border border-purple-500/30">
-              <div className="flex items-center gap-2">
-                <FolderKanban size={16} className="text-purple-400" />
-                <span className="text-sm text-white">Projets</span>
-              </div>
-              <span className="text-lg font-bold text-purple-400">{stats.projets}</span>
+          ) : (
+            <div className="text-center py-12 text-slate-400">
+              <TrendingUp size={40} className="mx-auto mb-3 opacity-50" />
+              <p className="text-sm">Aucune donnée disponible</p>
+              <p className="text-xs mt-1">Vos statistiques de présence apparaîtront ici</p>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -298,7 +362,7 @@ function Dashboard() {
         <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-4 md:p-5 shadow-xl">
           <h2 className="text-base md:text-lg font-semibold text-white mb-4 flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
-              <Calendar size={16} className="text-blue-400" />
+              <FolderKanban size={16} className="text-blue-400" />
             </div>
             Mes congés récents
           </h2>
@@ -343,46 +407,25 @@ function Dashboard() {
 
         <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-4 md:p-5 shadow-xl">
           <h2 className="text-base md:text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center">
-              <AlertCircle size={16} className="text-red-400" />
+            <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
+              <FolderKanban size={16} className="text-purple-400" />
             </div>
-            Statistiques annuelles
+            Projets actifs
           </h2>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between bg-gradient-to-r from-green-500/20 to-transparent rounded-xl px-4 py-3 border border-green-500/30">
+          <div className="bg-gradient-to-r from-purple-500/20 to-transparent rounded-xl px-4 py-6 border border-purple-500/30">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center">
-                  <CheckCircle size={18} className="text-green-400" />
+                <div className="w-12 h-12 rounded-xl bg-purple-500/30 flex items-center justify-center">
+                  <FolderKanban size={24} className="text-purple-400" />
                 </div>
-                <span className="text-white font-medium">Jours présents</span>
+                <div>
+                  <div className="text-white font-medium">Total des projets</div>
+                  <div className="text-xs text-slate-400">assignés à vous</div>
+                </div>
               </div>
               <div className="text-right">
-                <div className="text-2xl font-bold text-green-400">{stats.pointages.presents}</div>
-                <div className="text-[10px] text-green-400/60">cette année</div>
-              </div>
-            </div>
-            <div className="flex items-center justify-between bg-gradient-to-r from-amber-500/20 to-transparent rounded-xl px-4 py-3 border border-amber-500/30">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
-                  <AlertCircle size={18} className="text-amber-400" />
-                </div>
-                <span className="text-white font-medium">Jours de retard</span>
-              </div>
-              <div className="text-right">
-                <div className="text-2xl font-bold text-amber-400">{stats.pointages.retards}</div>
-                <div className="text-[10px] text-amber-400/60">cette année</div>
-              </div>
-            </div>
-            <div className="flex items-center justify-between bg-gradient-to-r from-red-500/20 to-transparent rounded-xl px-4 py-3 border border-red-500/30">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
-                  <XCircle size={18} className="text-red-400" />
-                </div>
-                <span className="text-white font-medium">Jours absents</span>
-              </div>
-              <div className="text-right">
-                <div className="text-2xl font-bold text-red-400">{stats.pointages.absents}</div>
-                <div className="text-[10px] text-red-400/60">cette année</div>
+                <div className="text-4xl font-bold text-purple-400">{stats.projets}</div>
+                <div className="text-xs text-purple-400/60">projets</div>
               </div>
             </div>
           </div>
