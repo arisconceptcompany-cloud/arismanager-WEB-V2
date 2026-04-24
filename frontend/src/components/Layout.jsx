@@ -367,14 +367,17 @@ function Layout({ user, children }) {
       {/* ── MAIN ── */}
       <main className="flex-1 min-h-screen transition-all duration-300 flex flex-col">
 
-        {/* Topbar mobile et desktop */}
+        {/* Topbar */}
         <div className="flex items-center justify-end gap-2 p-4 bg-slate-900 border-b border-white/10">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="p-2 bg-white/10 rounded-lg hover:bg-white/20 mr-auto"
-          >
-            <Menu size={24} className="text-white" />
-          </button>
+          {/* Bouton hamburger uniquement sur mobile */}
+          {isMobile && (
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 bg-white/10 rounded-lg hover:bg-white/20 mr-auto"
+            >
+              <Menu size={24} className="text-white" />
+            </button>
+          )}
           <button
             onClick={() => setShowPasswordModal(true)}
             className="p-2 bg-white/10 rounded-lg hover:bg-white/20"
