@@ -17,18 +17,19 @@ function Dashboard() {
   });
   const [loading, setLoading] = useState(true);
 
+  // ✅ FIX 1 : currentMonth dans les dépendances pour relancer fetchData à chaque changement de mois
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [currentMonth]);
 
   const fetchData = async () => {
+    setLoading(true);
     try {
       const year = currentMonth.getFullYear();
       const month = currentMonth.getMonth() + 1;
-      
-      const [pointages, pointagesStats, statsConge, projets, congesList] = await Promise.all([
+
+      const [pointages, statsConge, projets, congesList] = await Promise.all([
         pointageAPI.getPointages(),
-        pointageAPI.getStats(year),
         congeAPI.getStats(),
         projetAPI.getProjets(),
         congeAPI.getConges()
@@ -39,10 +40,12 @@ function Dashboard() {
         return date.getMonth() + 1 === month && date.getFullYear() === year;
       });
 
-      const pointageStats = pointagesStats.data.reduce((acc, curr) => ({
-        presents: acc.presents + Number(curr.jours_present || 0),
-        retards: acc.retards + Number(curr.jours_retard || 0),
-        absents: acc.absents + Number(curr.jours_absent || 0)
+      // ✅ FIX 2 : Calcul des stats directement depuis la liste des pointages
+      // (toute l'année, pas seulement le mois courant — pour le graphique annuel)
+      const pointageStats = pointages.data.reduce((acc, p) => ({
+        presents: acc.presents + (p.statut === 'present' ? 1 : 0),
+        retards:  acc.retards  + (p.statut === 'retard'  ? 1 : 0),
+        absents:  acc.absents  + (p.statut === 'absent'  ? 1 : 0),
       }), { presents: 0, retards: 0, absents: 0 });
 
       const congeStats = statsConge.data.reduce((acc, curr) => ({
@@ -75,37 +78,43 @@ function Dashboard() {
     const jourActuel = maintenant.getDate();
     const moisActuelReel = maintenant.getMonth();
     const anneeActuelleReel = maintenant.getFullYear();
-    
+
     const jours = [];
-    
+
     for (let i = 0; i < jourDebutSemaine; i++) {
       jours.push({ empty: true, key: `empty-${i}` });
     }
-    
+
     for (let i = 1; i <= joursDansMois; i++) {
       const date = new Date(anneeCal, moisCal, i);
       const jourSemaine = date.getDay();
       const estWeekend = jourSemaine === 0 || jourSemaine === 6;
       const estAujourdHui = i === jourActuel && moisCal === moisActuelReel && anneeCal === anneeActuelleReel;
-      
+
+      // ✅ FIX 3 : On cherche le pointage du jour dans pointagesMois
       const pointage = stats.pointagesMois.find(p => {
         const pDate = new Date(p.date);
-        return pDate.getDate() === i && pDate.getMonth() === moisCal;
+        return pDate.getDate() === i && pDate.getMonth() === moisCal && pDate.getFullYear() === anneeCal;
       });
 
       let statut = null;
       if (pointage) {
+        // ✅ Le statut vient directement du pointage (present, retard, absent, conge)
         statut = pointage.statut;
       } else if (estWeekend) {
         statut = 'weekend';
-      } else if (i <= jourActuel && moisCal === moisActuelReel && anneeCal === anneeActuelleReel) {
+      } else if (
+        // Jour passé sans pointage = absent (uniquement pour le mois en cours ou passé)
+        new Date(anneeCal, moisCal, i) < maintenant &&
+        !(estAujourdHui)
+      ) {
         statut = 'absent';
       }
 
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0');
       const day = String(date.getDate()).padStart(2, '0');
-      
+
       jours.push({
         jour: i,
         estWeekend,
@@ -115,7 +124,7 @@ function Dashboard() {
         key: i
       });
     }
-    
+
     return jours;
   };
 
@@ -144,9 +153,9 @@ function Dashboard() {
     <div>
       <div className="mb-6 md:mb-6 flex items-center gap-3 md:gap-4">
         {profilePhoto ? (
-          <img 
-            src={profilePhoto} 
-            alt="Profil" 
+          <img
+            src={profilePhoto}
+            alt="Profil"
             className="w-12 h-12 md:w-14 md:h-14 rounded-full object-cover border-2 border-blue-500/50 shadow-lg shadow-blue-500/20"
           />
         ) : (
@@ -161,6 +170,7 @@ function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
+        {/* Calendrier */}
         <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-4 md:p-5 shadow-xl">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base md:text-lg font-semibold text-white flex items-center gap-2">
@@ -196,13 +206,13 @@ function Dashboard() {
                 className={`
                   aspect-square flex items-center justify-center rounded-xl text-sm font-medium transition-all cursor-pointer
                   ${item.empty ? '' : 'hover:scale-105'}
-                  ${item.estWeekend && !item.statut ? 'bg-slate-700/60 text-slate-400' : ''}
+                  ${item.statut === 'weekend' ? 'bg-slate-700/60 text-slate-400' : ''}
                   ${item.statut === 'present' ? 'bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-lg shadow-emerald-500/30' : ''}
-                  ${item.statut === 'retard' ? 'bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-lg shadow-amber-500/30' : ''}
-                  ${item.statut === 'absent' ? 'bg-gradient-to-br from-rose-400 to-rose-600 text-white shadow-lg shadow-rose-500/30' : ''}
-                  ${item.statut === 'conge' ? 'bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-lg shadow-blue-500/30' : ''}
+                  ${item.statut === 'retard'  ? 'bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-lg shadow-amber-500/30' : ''}
+                  ${item.statut === 'absent'  ? 'bg-gradient-to-br from-rose-400 to-rose-600 text-white shadow-lg shadow-rose-500/30' : ''}
+                  ${item.statut === 'conge'   ? 'bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-lg shadow-blue-500/30' : ''}
                   ${item.estAujourdHui && !item.statut ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-slate-800 bg-blue-100 text-blue-700 font-bold' : ''}
-                  ${!item.statut && !item.estWeekend && !item.estAujourdHui ? 'bg-white/10 text-slate-200 hover:bg-white/20' : ''}
+                  ${!item.statut && !item.estWeekend && !item.estAujourdHui && !item.empty ? 'bg-white/10 text-slate-200 hover:bg-white/20' : ''}
                   ${item.estAujourdHui && item.statut ? 'ring-2 ring-blue-500 ring-offset-1' : ''}
                 `}
               >
@@ -210,22 +220,28 @@ function Dashboard() {
               </div>
             ))}
           </div>
-          <div className="flex items-center justify-center gap-5 mt-4 pt-3 border-t border-white/10 text-[11px]">
+          {/* Légende mise à jour avec Retard */}
+          <div className="flex items-center justify-center flex-wrap gap-3 mt-4 pt-3 border-t border-white/10 text-[11px]">
             <div className="flex items-center gap-1.5 text-slate-300">
-              <div className="w-4 h-4 rounded bg-gradient-to-br from-emerald-400 to-emerald-600"></div>
+              <div className="w-3 h-3 rounded bg-gradient-to-br from-emerald-400 to-emerald-600"></div>
               <span>Présent</span>
             </div>
             <div className="flex items-center gap-1.5 text-slate-300">
-              <div className="w-4 h-4 rounded bg-gradient-to-br from-amber-400 to-amber-600"></div>
+              <div className="w-3 h-3 rounded bg-gradient-to-br from-amber-400 to-amber-600"></div>
               <span>Retard</span>
             </div>
             <div className="flex items-center gap-1.5 text-slate-300">
-              <div className="w-4 h-4 rounded bg-gradient-to-br from-rose-400 to-rose-600"></div>
+              <div className="w-3 h-3 rounded bg-gradient-to-br from-rose-400 to-rose-600"></div>
               <span>Absent</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-slate-300">
+              <div className="w-3 h-3 rounded bg-gradient-to-br from-blue-400 to-blue-600"></div>
+              <span>Congé</span>
             </div>
           </div>
         </div>
 
+        {/* Dernier pointage */}
         <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-4 md:p-5 shadow-xl">
           <h2 className="text-base md:text-lg font-semibold text-white mb-3 flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center">
@@ -260,6 +276,7 @@ function Dashboard() {
           )}
         </div>
 
+        {/* Statistiques annuelles */}
         <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-4 md:p-5 shadow-xl">
           <h2 className="text-base md:text-lg font-semibold text-white mb-4 flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
@@ -275,8 +292,8 @@ function Dashboard() {
                     <Pie
                       data={[
                         { name: 'Présents', value: stats.pointages.presents, color: '#22c55e' },
-                        { name: 'Retards', value: stats.pointages.retards, color: '#f59e0b' },
-                        { name: 'Absents', value: stats.pointages.absents, color: '#ef4444' }
+                        { name: 'Retards',  value: stats.pointages.retards,  color: '#f59e0b' },
+                        { name: 'Absents',  value: stats.pointages.absents,  color: '#ef4444' }
                       ]}
                       cx="50%"
                       cy="50%"
@@ -286,9 +303,9 @@ function Dashboard() {
                       dataKey="value"
                     >
                       {[
-                        { name: 'Présents', value: stats.pointages.presents, color: '#22c55e' },
-                        { name: 'Retards', value: stats.pointages.retards, color: '#f59e0b' },
-                        { name: 'Absents', value: stats.pointages.absents, color: '#ef4444' }
+                        { color: '#22c55e' },
+                        { color: '#f59e0b' },
+                        { color: '#ef4444' }
                       ].map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
@@ -360,6 +377,7 @@ function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+        {/* Congés récents */}
         <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-4 md:p-5 shadow-xl">
           <h2 className="text-base md:text-lg font-semibold text-white mb-4 flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
@@ -373,11 +391,11 @@ function Dashboard() {
                 <div key={conge.id} className="flex items-center justify-between bg-white/5 hover:bg-white/10 rounded-xl px-4 py-3 transition-all border border-white/10">
                   <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                      conge.statut === 'approuve' ? 'bg-green-500/20' :
+                      conge.statut === 'approuve'   ? 'bg-green-500/20' :
                       conge.statut === 'en_attente' ? 'bg-amber-500/20' : 'bg-red-500/20'
                     }`}>
                       <Calendar size={18} className={
-                        conge.statut === 'approuve' ? 'text-green-400' :
+                        conge.statut === 'approuve'   ? 'text-green-400' :
                         conge.statut === 'en_attente' ? 'text-amber-400' : 'text-red-400'
                       } />
                     </div>
@@ -389,7 +407,7 @@ function Dashboard() {
                     </div>
                   </div>
                   <span className={`px-3 py-1.5 rounded-full text-xs font-semibold ${
-                    conge.statut === 'approuve' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
+                    conge.statut === 'approuve'   ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
                     conge.statut === 'en_attente' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
                     'bg-red-500/20 text-red-400 border border-red-500/30'
                   }`}>
@@ -406,6 +424,7 @@ function Dashboard() {
           )}
         </div>
 
+        {/* Projets actifs */}
         <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-4 md:p-5 shadow-xl">
           <h2 className="text-base md:text-lg font-semibold text-white mb-4 flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
