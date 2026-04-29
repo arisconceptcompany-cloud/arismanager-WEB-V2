@@ -28,11 +28,12 @@ function Dashboard() {
       const year = currentMonth.getFullYear();
       const month = currentMonth.getMonth() + 1;
 
-      const [pointages, statsConge, projets, congesList] = await Promise.all([
+      const [pointages, statsConge, projets, congesList, pointageStatsAPI] = await Promise.all([
         pointageAPI.getPointages(),
         congeAPI.getStats(),
         projetAPI.getProjets(),
-        congeAPI.getConges()
+        congeAPI.getConges(),
+        pointageAPI.getStats(year)
       ]);
 
       const pointagesMois = pointages.data.filter(p => {
@@ -40,12 +41,12 @@ function Dashboard() {
         return date.getMonth() + 1 === month && date.getFullYear() === year;
       });
 
-      // ✅ FIX 2 : Calcul des stats directement depuis la liste des pointages
-      // (toute l'année, pas seulement le mois courant — pour le graphique annuel)
-      const pointageStats = pointages.data.reduce((acc, p) => ({
-        presents: acc.presents + (p.statut === 'present' ? 1 : 0),
-        retards:  acc.retards  + (p.statut === 'retard'  ? 1 : 0),
-        absents:  acc.absents  + (p.statut === 'absent'  ? 1 : 0),
+      // ✅ FIX 2 : Utiliser les stats du backend (qui compte correctement présent/retard/absent)
+      const statsFromAPI = pointageStatsAPI.data || [];
+      const pointageStats = statsFromAPI.reduce((acc, s) => ({
+        presents: acc.presents + Number(s.jours_present || 0),
+        retards:  acc.retards  + Number(s.jours_retard  || 0),
+        absents:  acc.absents  + Number(s.jours_absent  || 0),
       }), { presents: 0, retards: 0, absents: 0 });
 
       const congeStats = statsConge.data.reduce((acc, curr) => ({
@@ -91,7 +92,7 @@ function Dashboard() {
       const estWeekend = jourSemaine === 0 || jourSemaine === 6;
       const estAujourdHui = i === jourActuel && moisCal === moisActuelReel && anneeCal === anneeActuelleReel;
 
-      // ✅ FIX 3 : On cherche le pointage du jour dans pointagesMois
+       // ✅ FIX 3 : On cherche le pointage du jour dans pointagesMois
       const pointage = stats.pointagesMois.find(p => {
         const pDate = new Date(p.date);
         return pDate.getDate() === i && pDate.getMonth() === moisCal && pDate.getFullYear() === anneeCal;
@@ -109,6 +110,20 @@ function Dashboard() {
         !(estAujourdHui)
       ) {
         statut = 'absent';
+      }
+
+      // ✅ FIX 4 : Récupérer aussi les congés pour le jour
+      if (!statut && stats.congesList && stats.congesList.length > 0) {
+        const dateStr = `${anneeCal}-${String(moisCal + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+        const conge = stats.congesList.find(c => {
+          const debut = new Date(c.date_debut);
+          const fin = new Date(c.date_fin);
+          const jour = new Date(dateStr);
+          return jour >= debut && jour <= fin && c.statut === 'approuve';
+        });
+        if (conge) {
+          statut = 'conge';
+        }
       }
 
       const year = date.getFullYear();

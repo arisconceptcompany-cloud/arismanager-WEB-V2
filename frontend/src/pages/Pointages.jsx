@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Clock, CheckCircle, RefreshCw, Trash2 } from 'lucide-react';
+import { Clock, CheckCircle, RefreshCw, Trash2, XCircle } from 'lucide-react';
 import api, { pointageAPI } from '../services/api';
 
 function Pointages() {
@@ -82,6 +82,7 @@ function Pointages() {
   const totalJours    = stats?.reduce((acc, s) => acc + Number(s.total_jours),   0) || 0;
   const totalPresents = stats?.reduce((acc, s) => acc + Number(s.jours_present), 0) || 0;
   const totalRetards  = stats?.reduce((acc, s) => acc + Number(s.jours_retard),  0) || 0;
+  const totalAbsents  = stats?.reduce((acc, s) => acc + Number(s.jours_absent || 0), 0) || 0;
 
   if (loading) {
     return (
@@ -108,7 +109,7 @@ function Pointages() {
         </button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 mb-6 md:mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
         <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 md:p-6 border border-white/20">
           <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
             <div className="w-10 md:w-12 h-10 md:h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
@@ -123,12 +124,24 @@ function Pointages() {
 
         <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 md:p-6 border border-white/20">
           <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
-            <div className="w-10 md:w-12 h-10 md:h-12 bg-red-500/20 rounded-xl flex items-center justify-center">
-              <Clock className="text-red-400" size={20} />
+            <div className="w-10 md:w-12 h-10 md:h-12 bg-amber-500/20 rounded-xl flex items-center justify-center">
+              <Clock className="text-amber-400" size={20} />
             </div>
             <div>
               <h3 className="text-xs md:text-sm text-white/70">Jours de retard</h3>
               <div className="text-2xl md:text-3xl font-bold text-white">{totalRetards}</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 md:p-6 border border-white/20">
+          <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
+            <div className="w-10 md:w-12 h-10 md:h-12 bg-red-500/20 rounded-xl flex items-center justify-center">
+              <XCircle className="text-red-400" size={20} />
+            </div>
+            <div>
+              <h3 className="text-xs md:text-sm text-white/70">Jours absents</h3>
+              <div className="text-2xl md:text-3xl font-bold text-white">{totalAbsents}</div>
             </div>
           </div>
         </div>
