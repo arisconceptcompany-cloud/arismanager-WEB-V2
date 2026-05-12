@@ -347,16 +347,16 @@ function AdminPresences() {
                           const photoUrl = getPhotoUrl(employe);
                           return (
                             <>
-                              {photoUrl ? (
+                              {photoUrl && (
                                 <img 
                                   src={photoUrl} 
                                   alt="" 
                                   className="w-10 h-10 rounded-full object-cover"
                                   onError={(e) => handlePhotoError(e, employe)}
                                 />
-                              ) : null}
+                              )}
                               <div 
-                                className={`w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm ${photoUrl ? 'hidden' : ''}`}
+                                className={`w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm ${photoUrl ? 'hidden' : 'flex'}`}
                               >
                                 {employe.prenom?.[0]}{employe.nom?.[0]}
                               </div>

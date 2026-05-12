@@ -262,9 +262,11 @@ function AdminEmployes() {
     return null;
   };
 
-  const handlePhotoError = (e) => {
-    const emp = { prenom: e.target.dataset.prenom, nom: e.target.dataset.nom };
-    e.target.src = getDefaultAvatar(emp);
+  const handlePhotoError = (e, employe) => {
+    e.target.style.display = 'none';
+    if (e.target.nextSibling) {
+      e.target.nextSibling.style.display = 'flex';
+    }
   };
 
   if (loading) {
@@ -325,7 +327,7 @@ function AdminEmployes() {
               <div key={emp.id} className="bg-white/5 rounded-lg p-4 border border-white/10">
                 <div className="flex items-start gap-3">
                   {photoUrl ? (
-                    <img src={photoUrl} alt="" className="w-12 h-12 rounded-full object-cover" onError={handlePhotoError} />
+                    <img src={photoUrl} alt="" className="w-12 h-12 rounded-full object-cover" onError={(e) => handlePhotoError(e, emp)} />
                   ) : (
                     <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
                       {getInitials(emp.nom, emp.prenom)}
@@ -378,21 +380,20 @@ function AdminEmployes() {
                 <tr key={emp.id} className="border-b border-white/10 hover:bg-white/5">
                   <td className="py-4 px-2">
                     <div className="flex items-center gap-3">
-                      {photoUrl ? (
+                      {photoUrl && (
                         <img 
                           src={photoUrl} 
                           alt="" 
                           className="w-10 h-10 rounded-full object-cover" 
-                          data-prenom={emp.prenom}
-                          data-nom={emp.nom}
-                          onError={handlePhotoError}
+                          onError={(e) => handlePhotoError(e, emp)}
                           loading="lazy"
                         />
-                      ) : (
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
-                          {getInitials(emp.nom, emp.prenom)}
-                        </div>
                       )}
+                      <div 
+                        className={`w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm ${photoUrl ? 'hidden' : 'flex'}`}
+                      >
+                        {getInitials(emp.nom, emp.prenom)}
+                      </div>
                       <div>
                         <p className="text-white font-medium">{emp.prenom} {emp.nom}</p>
                         <p className="text-white/50 text-sm">{emp.email}</p>
@@ -678,28 +679,15 @@ function AdminEmployes() {
                 </div>
                 <div className="flex items-center gap-3 text-white/70">
                   <User size={18} />
-                  <span>{selectedEmploye.num_cin || '-'}</span>
+                  <span>{selectedEmploye.num_cin ? selectedEmploye.num_cin.replace(/(\d{3})(\d{3})(\d{3})(\d{3})/, '$1 $2 $3 $4') : '-'}</span>
                 </div>
                 <div className="flex items-center gap-3 text-white/70">
                   <Shield size={18} />
-                  <span>{selectedEmploye.num_cnaps ? formatCNAPS(selectedEmploye.num_cnaps) : '-'}</span>
+                  <span>{selectedEmploye.num_cnaps || '-'}</span>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
-
-      {toast && (
-        <div className={`fixed top-6 right-6 z-[9999] flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl ${
-          toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'
-        } text-white animate-slide-in min-w-[280px]`}>
-          {toast.type === 'success' ? (
-            <Check size={20} />
-          ) : (
-            <AlertTriangle size={20} />
-          )}
-          <span className="font-medium">{toast.message}</span>
         </div>
       )}
 
