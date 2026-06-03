@@ -271,7 +271,7 @@ function AdminPresences() {
 
       <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden">
         {/* Version mobile: cartes */}
-        <div className="md:hidden p-4 space-y-3">
+        <div className="lg:hidden p-4 space-y-3">
           {employes.map((employe) => {
             const presence = getPresenceForEmploye(employe.id);
             const hasRetard = calculateRetard(presence?.heure_arrivee) !== '-';
@@ -315,7 +315,7 @@ function AdminPresences() {
         </div>
 
         {/* Version desktop: table */}
-        <div className="hidden md:block overflow-x-auto">
+        <div className="hidden lg:block overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="bg-white/5 border-b border-white/20">

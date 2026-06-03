@@ -320,7 +320,7 @@ function AdminEmployes() {
         </div>
 
         {/* Version mobile: cartes */}
-        <div className="md:hidden space-y-3">
+        <div className="lg:hidden space-y-3">
           {filteredEmployes.map((emp) => {
             const photoUrl = getPhotoUrl(emp);
             return (
@@ -359,7 +359,7 @@ function AdminEmployes() {
         </div>
 
         {/* Version desktop: table */}
-        <div className="hidden md:block overflow-x-auto">
+        <div className="hidden lg:block overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="text-left text-white/50 border-b border-white/20">
