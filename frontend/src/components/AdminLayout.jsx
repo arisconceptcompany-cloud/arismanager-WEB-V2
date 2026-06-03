@@ -591,12 +591,12 @@ function AdminLayout({ user, children }) {
       </aside>
 
       {/* ── MAIN ── */}
-      <main className="flex-1 min-h-screen transition-all duration-300 flex flex-col">
+      <main className="flex-1 min-h-screen min-w-0 transition-all duration-300 flex flex-col">
         {/* Topbar mobile et desktop */}
         <div className="flex items-center justify-end gap-2 p-4 bg-slate-900 border-b border-white/10">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="p-2 bg-white/10 rounded-lg hover:bg-white/20 mr-auto"
+            className="p-2 bg-white/10 rounded-lg hover:bg-white/20 mr-auto md:hidden"
           >
             <Menu size={24} className="text-white" />
           </button>
