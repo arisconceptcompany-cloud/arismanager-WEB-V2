@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Clock, CheckCircle, RefreshCw, Trash2, XCircle } from 'lucide-react';
+import { Clock, CheckCircle, RefreshCw, Trash2, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import api, { pointageAPI } from '../services/api';
 
 function Pointages() {
@@ -7,6 +7,7 @@ function Pointages() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -84,6 +85,41 @@ function Pointages() {
   const totalRetards  = stats?.reduce((acc, s) => acc + Number(s.jours_retard),  0) || 0;
   const totalAbsents  = stats?.reduce((acc, s) => acc + Number(s.jours_absent || 0), 0) || 0;
 
+  const groupedPointages = pointages.reduce((acc, p) => {
+    const [y, m] = p.date.split('-');
+    const key = `${y}-${m}`;
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(p);
+    return acc;
+  }, {});
+  const sortedMonths = Object.keys(groupedPointages).sort((a, b) => b.localeCompare(a));
+
+  const now = new Date();
+  const moisEnCours = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const pointagesCeMois = groupedPointages[moisEnCours] || [];
+  const retardsCeMois = pointagesCeMois.filter(p => p.statut === 'retard').length;
+  const travaillesCeMois = pointagesCeMois.filter(p => p.statut === 'present' || p.statut === 'retard').length;
+
+  useEffect(() => {
+    if (sortedMonths.length > 0 && !selectedMonth) {
+      setSelectedMonth(sortedMonths[0]);
+    }
+  }, [sortedMonths]);
+
+  const monthIndex = selectedMonth ? sortedMonths.indexOf(selectedMonth) : -1;
+
+  const goPrevMonth = () => {
+    if (monthIndex < sortedMonths.length - 1) {
+      setSelectedMonth(sortedMonths[monthIndex + 1]);
+    }
+  };
+
+  const goNextMonth = () => {
+    if (monthIndex > 0) {
+      setSelectedMonth(sortedMonths[monthIndex - 1]);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-96">
@@ -116,8 +152,8 @@ function Pointages() {
               <CheckCircle className="text-green-400" size={20} />
             </div>
             <div>
-              <h3 className="text-xs md:text-sm text-white/70">Jours présents</h3>
-              <div className="text-2xl md:text-3xl font-bold text-white">{totalPresents}</div>
+              <h3 className="text-xs md:text-sm text-white/70">Jours travaillés (ce mois)</h3>
+              <div className="text-2xl md:text-3xl font-bold text-white">{travaillesCeMois}</div>
             </div>
           </div>
         </div>
@@ -128,8 +164,8 @@ function Pointages() {
               <Clock className="text-amber-400" size={20} />
             </div>
             <div>
-              <h3 className="text-xs md:text-sm text-white/70">Jours de retard</h3>
-              <div className="text-2xl md:text-3xl font-bold text-white">{totalRetards}</div>
+              <h3 className="text-xs md:text-sm text-white/70">Retards (ce mois)</h3>
+              <div className="text-2xl md:text-3xl font-bold text-white">{retardsCeMois}</div>
             </div>
           </div>
         </div>
@@ -152,8 +188,8 @@ function Pointages() {
               <Clock className="text-purple-400" size={20} />
             </div>
             <div>
-              <h3 className="text-xs md:text-sm text-white/70">Total pointages</h3>
-              <div className="text-2xl md:text-3xl font-bold text-white">{pointages.length}</div>
+              <h3 className="text-xs md:text-sm text-white/70">Total pointages (ce mois)</h3>
+              <div className="text-2xl md:text-3xl font-bold text-white">{pointagesCeMois.length}</div>
             </div>
           </div>
         </div>
@@ -161,10 +197,36 @@ function Pointages() {
 
       <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden">
         <div className="p-4 md:p-6 border-b border-white/20">
-          <h2 className="text-lg md:text-xl font-semibold text-white flex items-center gap-2">
-            <Clock size={24} />
-            Historique des pointages
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg md:text-xl font-semibold text-white flex items-center gap-2">
+              <Clock size={24} />
+              Historique des pointages
+            </h2>
+            {selectedMonth && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={goPrevMonth}
+                  disabled={monthIndex >= sortedMonths.length - 1}
+                  className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed text-white transition-colors"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <span className="text-white/80 text-sm font-medium min-w-[120px] text-center">
+                  {(() => {
+                    const [y, m] = selectedMonth.split('-');
+                    return new Date(y, m - 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+                  })()}
+                </span>
+                <button
+                  onClick={goNextMonth}
+                  disabled={monthIndex <= 0}
+                  className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed text-white transition-colors"
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {pointages.length === 0 ? (
@@ -177,11 +239,11 @@ function Pointages() {
           <>
             {/* Mobile cards */}
             <div className="md:hidden space-y-3 p-4 max-md:block">
-              {pointages.map((pointage) => {
+              {selectedMonth && groupedPointages[selectedMonth].map((pointage) => {
                 const { estRetard, retard } = calculerRetard(pointage.heure_arrivee);
                 const totalTravail = calculerHeuresTravail(pointage.heure_arrivee, pointage.heure_depart);
                 return (
-                  <div key={pointage.id} className="bg-white/5 rounded-lg p-4 border border-white/10">
+                  <div key={pointage.id} className="bg-white/5 rounded-lg p-4 border border-white/10 mb-3">
                     <div className="flex justify-between items-center mb-3">
                       <div className="text-white font-medium">
                         {(() => {
@@ -248,96 +310,101 @@ function Pointages() {
                     <th className="px-6 py-4 text-center text-xs font-semibold text-white/70 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/10">
-                  {pointages.map((pointage) => {
-                    const { estRetard, retard } = calculerRetard(pointage.heure_arrivee);
-                    const totalTravail = calculerHeuresTravail(pointage.heure_arrivee, pointage.heure_depart);
-
-                    return (
-                      // FIX: </tr> était en dehors du return, il est maintenant correctement à l'intérieur
-                      <tr key={pointage.id} className="hover:bg-white/5 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-white font-medium">
-                            {(() => {
-                              const [y, m, d] = pointage.date.split('-');
-                              const date = new Date(y, m - 1, d);
-                              return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
-                            })()}
-                          </div>
-                          <div className="text-xs text-white/50 capitalize">
-                            {(() => {
-                              const [y, m, d] = pointage.date.split('-');
-                              const date = new Date(y, m - 1, d);
-                              return date.toLocaleDateString('fr-FR', { weekday: 'long' });
-                            })()}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold ${
-                            estRetard
-                              ? 'bg-amber-500/20 text-amber-400'
-                              : 'bg-green-500/20 text-green-400'
-                          }`}>
-                            {pointage.heure_arrivee ? (
-                              <>
-                                <Clock size={16} />
-                                {formatTime(pointage.heure_arrivee)}
-                              </>
-                            ) : (
-                              <span className="text-white/50">-</span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-white/10 text-white">
-                            {pointage.heure_depart ? (
-                              <>
-                                <Clock size={16} />
-                                {formatTime(pointage.heure_depart)}
-                              </>
-                            ) : (
-                              <span className="text-white/50">-</span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          {estRetard ? (
-                            <span className="inline-flex items-center gap-1 px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-sm font-semibold">
-                              +{retard}
-                            </span>
-                          ) : (
-                            <span className="text-green-400 text-sm font-medium">À l'heure</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500/20 text-purple-300 rounded-lg text-sm font-semibold">
-                            {totalTravail !== '-' && <Clock size={16} />}
-                            {totalTravail}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <span className={`px-4 py-2 rounded-full text-xs font-bold uppercase ${
-                            pointage.statut === 'present' ? 'bg-green-500/20 text-green-400' :
-                            pointage.statut === 'retard' ? 'bg-amber-500/20 text-amber-400' :
-                            pointage.statut === 'absent' ? 'bg-red-500/20 text-red-400' :
-                            'bg-blue-500/20 text-blue-400'
-                          }`}>
-                            {pointage.statut}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <button
-                            onClick={() => handleDelete(pointage.id)}
-                            className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
               </table>
+              {selectedMonth && (
+                <div>
+                  <table className="w-full">
+                    <tbody className="divide-y divide-white/10">
+                      {groupedPointages[selectedMonth].map((pointage) => {
+                        const { estRetard, retard } = calculerRetard(pointage.heure_arrivee);
+                        const totalTravail = calculerHeuresTravail(pointage.heure_arrivee, pointage.heure_depart);
+
+                        return (
+                          <tr key={pointage.id} className="hover:bg-white/5 transition-colors">
+                            <td className="px-6 py-4">
+                              <div className="text-sm text-white font-medium">
+                                {(() => {
+                                  const [y, m, d] = pointage.date.split('-');
+                                  const date = new Date(y, m - 1, d);
+                                  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+                                })()}
+                              </div>
+                              <div className="text-xs text-white/50 capitalize">
+                                {(() => {
+                                  const [y, m, d] = pointage.date.split('-');
+                                  const date = new Date(y, m - 1, d);
+                                  return date.toLocaleDateString('fr-FR', { weekday: 'long' });
+                                })()}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold ${
+                                estRetard
+                                  ? 'bg-amber-500/20 text-amber-400'
+                                  : 'bg-green-500/20 text-green-400'
+                              }`}>
+                                {pointage.heure_arrivee ? (
+                                  <>
+                                    <Clock size={16} />
+                                    {formatTime(pointage.heure_arrivee)}
+                                  </>
+                                ) : (
+                                  <span className="text-white/50">-</span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-white/10 text-white">
+                                {pointage.heure_depart ? (
+                                  <>
+                                    <Clock size={16} />
+                                    {formatTime(pointage.heure_depart)}
+                                  </>
+                                ) : (
+                                  <span className="text-white/50">-</span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              {estRetard ? (
+                                <span className="inline-flex items-center gap-1 px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-sm font-semibold">
+                                  +{retard}
+                                </span>
+                              ) : (
+                                <span className="text-green-400 text-sm font-medium">À l'heure</span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500/20 text-purple-300 rounded-lg text-sm font-semibold">
+                                {totalTravail !== '-' && <Clock size={16} />}
+                                {totalTravail}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <span className={`px-4 py-2 rounded-full text-xs font-bold uppercase ${
+                                pointage.statut === 'present' ? 'bg-green-500/20 text-green-400' :
+                                pointage.statut === 'retard' ? 'bg-amber-500/20 text-amber-400' :
+                                pointage.statut === 'absent' ? 'bg-red-500/20 text-red-400' :
+                                'bg-blue-500/20 text-blue-400'
+                              }`}>
+                                {pointage.statut}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <button
+                                onClick={() => handleDelete(pointage.id)}
+                                className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </>
         )}

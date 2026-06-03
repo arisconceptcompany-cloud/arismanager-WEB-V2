@@ -2,21 +2,14 @@ import { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, User, Clock, Calendar, FolderKanban, 
-  Wallet, FileText, LogOut, MessageCircle, Bell, X, Check, CheckCheck, Menu, X as CloseIcon, Lock, Eye, EyeOff, FolderArchive
+  Wallet, FileText, LogOut, MessageCircle, Bell, X, Check, CheckCheck, Menu, X as CloseIcon, Lock, Eye, EyeOff
 } from 'lucide-react';
 import { authAPI, chatAPI, notificationAPI, DEFAULT_AVATAR } from '../services/api';
 import { useUser } from '../context/UserContext';
 
 function Layout({ user, children }) {
   const navigate = useNavigate();
-  const { profilePhoto, getAvatarUrl, handlePhotoError, photoError } = useUser();
-
-  const getSidebarPhoto = () => {
-    if (profilePhoto && profilePhoto.startsWith('data:')) {
-      return profilePhoto;
-    }
-    return getAvatarUrl();
-  };
+  const { profilePhoto, handlePhotoError, photoError } = useUser();
 
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifCount, setNotifCount] = useState(0);
@@ -142,7 +135,6 @@ function Layout({ user, children }) {
     { path: '/pointages', icon: Clock, label: 'Mes pointages' },
     { path: '/conges', icon: Calendar, label: 'Mes congés', badge: notifCount },
     { path: '/projets', icon: FolderKanban, label: 'Projets' },
-    { path: '/fichiers', icon: FolderArchive, label: 'Fichiers' },
     { path: '/salaires', icon: Wallet, label: 'Mon salaire' },
     { path: '/rapports', icon: FileText, label: 'Mon rapport' },
   ];
@@ -209,12 +201,18 @@ function Layout({ user, children }) {
         <div className="p-4 lg:p-6 border-b border-white/20 flex-shrink-0">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <img
-                src={getSidebarPhoto()}
-                alt="Profil"
-                className="w-10 h-10 lg:w-12 lg:h-12 rounded-full object-cover border-2 border-blue-400"
-                onError={handlePhotoError}
-              />
+              {profilePhoto ? (
+                <img
+                  src={profilePhoto}
+                  alt="Profil"
+                  className="w-10 h-10 lg:w-12 lg:h-12 rounded-full object-cover border-2 border-blue-400"
+                  onError={handlePhotoError}
+                />
+              ) : (
+                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold border-2 border-blue-400">
+                  {user?.prenom?.[0]}{user?.nom?.[0]}
+                </div>
+              )}
               <div>
                 <h2 className="text-white font-semibold text-sm lg:text-base">
                   {user?.prenom} {user?.nom}

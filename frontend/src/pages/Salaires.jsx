@@ -41,6 +41,13 @@ function Salaires() {
         <p className="text-white/70">Consultez vos bulletins de salaire</p>
       </div>
 
+      <div className="mb-6 p-4 bg-amber-500/20 border border-amber-500/30 rounded-xl flex items-center gap-3">
+        <div className="w-8 h-8 rounded-lg bg-amber-500/30 flex items-center justify-center shrink-0">
+          <TrendingUp size={18} className="text-amber-400" />
+        </div>
+        <p className="text-amber-300 text-sm font-medium">En cours de maintenance</p>
+      </div>
+
       {salaireActuel && (
         <div className="bg-gradient-to-r from-blue-600/80 to-blue-800/80 backdrop-blur-md rounded-2xl p-8 text-white mb-8 border border-white/20">
           <h3 className="text-lg opacity-90 mb-2">Salaire du {getMoisLabel(salaireActuel.mois)} {salaireActuel.annee}</h3>

@@ -32,22 +32,26 @@ export const UserProvider = ({ children, initialUser }) => {
       if (savedPhoto && savedPhoto.length > 100000) {
         localStorage.removeItem(`profilePhoto_${userId}`);
       }
-      
-      api.get(`/photos/employe/${userId}`, { responseType: 'blob' })
-        .then(response => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            const base64 = reader.result;
-            setProfilePhoto(base64);
-            if (base64.length < 80000) {
-              localStorage.setItem(`profilePhoto_${userId}`, base64);
-            }
-          };
-          reader.readAsDataURL(response.data);
-        })
-        .catch(() => {
-          setPhotoError(true);
-        });
+
+      const photoUrl = `https://apiv2.aris-cc.com/api/photos/employe/${userId}`;
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        setProfilePhoto(photoUrl);
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        try {
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          if (dataUrl.length < 80000) {
+            localStorage.setItem(`profilePhoto_${userId}`, dataUrl);
+          }
+        } catch (_) {}
+      };
+      img.onerror = () => setPhotoError(true);
+      img.src = photoUrl;
     }
   }, [initialUser]);
 

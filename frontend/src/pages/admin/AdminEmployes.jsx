@@ -72,12 +72,16 @@ function AdminEmployes() {
     setFilteredEmployes(filtered);
   }, [searchQuery, employes]);
 
+  const sortByMatricule = (list) =>
+    [...list].sort((a, b) => a.matricule.localeCompare(b.matricule, undefined, { numeric: true }));
+
   const fetchEmployes = async () => {
     try {
       const res = await api.get('/admin/employes');
-      setEmployes(res.data);
-      setFilteredEmployes(res.data);
-      preloadPhotos(res.data);
+      const sorted = sortByMatricule(res.data);
+      setEmployes(sorted);
+      setFilteredEmployes(sorted);
+      preloadPhotos(sorted);
     } catch (error) {
       console.error('Erreur chargement employés:', error);
     } finally {
@@ -85,7 +89,7 @@ function AdminEmployes() {
     }
   };
 
-  const preloadPhotos = (employeeList) => {
+  const preloadPhotos = async (employeeList, concurrency = 3) => {
     const newCache = {};
     employeeList.forEach(emp => {
       const storedPhoto = localStorage.getItem(`profilePhoto_${emp.id}`);
@@ -101,23 +105,28 @@ function AdminEmployes() {
     setPhotoCache(newCache);
     
     const toFetch = employeeList.filter(emp => !newCache[emp.id] && !emp.photo?.startsWith('data:'));
-    toFetch.forEach(emp => {
-      api.get(`/photos/employe/${emp.id}`, { responseType: 'blob' })
-        .then(response => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            const base64 = reader.result;
-            if (base64.length < 80000) {
-              localStorage.setItem(`profilePhoto_${emp.id}`, base64);
-            }
-            setPhotoCache(prev => ({ ...prev, [emp.id]: base64 }));
-          };
-          reader.readAsDataURL(response.data);
-        })
-        .catch(() => {
-          setPhotoCache(prev => ({ ...prev, [emp.id]: 'default' }));
-        });
-    });
+    
+    for (let i = 0; i < toFetch.length; i += concurrency) {
+      const batch = toFetch.slice(i, i + concurrency);
+      await Promise.all(batch.map(emp =>
+        api.get(`/photos/employe/${emp.id}`, { responseType: 'blob' })
+          .then(response => new Promise(resolve => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const base64 = reader.result;
+              if (base64.length < 80000) {
+                localStorage.setItem(`profilePhoto_${emp.id}`, base64);
+              }
+              setPhotoCache(prev => ({ ...prev, [emp.id]: base64 }));
+              resolve();
+            };
+            reader.readAsDataURL(response.data);
+          }))
+          .catch(() => {
+            setPhotoCache(prev => ({ ...prev, [emp.id]: 'default' }));
+          })
+      ));
+    }
   };
 
   const openAddModal = () => {
@@ -359,7 +368,7 @@ function AdminEmployes() {
         </div>
 
         {/* Version desktop: table */}
-        <div className="hidden lg:block overflow-x-auto">
+        <div className="max-lg:hidden lg:block overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="text-left text-white/50 border-b border-white/20">

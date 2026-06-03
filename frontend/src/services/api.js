@@ -10,16 +10,63 @@ const api = axios.create({
   }
 });
 
+const responseCache = new Map();
+const CACHE_TTL = 120000;
+const NO_CACHE_PATTERNS = ['/chat/', '/notifications/', '/unread'];
+
+function getCacheKey(config) {
+  return `${config.method}:${config.url}:${JSON.stringify(config.params || {})}`;
+}
+
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('session_token');
   if (token) {
     config.headers['Authorization'] = `Bearer ${token}`;
   }
+
+  if (config.method !== 'get') {
+    responseCache.clear();
+    return config;
+  }
+
+  if (NO_CACHE_PATTERNS.some(p => config.url.includes(p))) {
+    return config;
+  }
+
+  const key = getCacheKey(config);
+  const cached = responseCache.get(key);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return {
+      ...config,
+      adapter: () => Promise.resolve({
+        data: cached.data,
+        status: 200,
+        statusText: 'OK',
+        headers: cached.headers || {},
+        config,
+        request: {},
+        _cached: true
+      })
+    };
+  }
+
   return config;
 });
 
 api.interceptors.response.use(
-  response => response,
+  (response) => {
+    if (response.config.method === 'get' && !response._cached && response.status === 200) {
+      if (!NO_CACHE_PATTERNS.some(p => response.config.url.includes(p))) {
+        const key = getCacheKey(response.config);
+        responseCache.set(key, {
+          data: response.data,
+          headers: response.headers,
+          timestamp: Date.now()
+        });
+      }
+    }
+    return response;
+  },
   error => {
     if (error.config && !error.config._retry && error.response?.status === 401) {
       error.config._retry = true;
@@ -51,7 +98,7 @@ export const employeAPI = {
 export const pointageAPI = {
   getPointages: (params) => api.get('/pointages', { params }),
   addPointage: (data) => api.post('/pointages', data),
-  getStats: (year) => api.get('/pointages/stats', { params: { year } }),
+  getStats: (year, month) => api.get('/pointages/stats', { params: { year, month } }),
   deletePointage: (id) => api.delete(`/pointages/${id}`)
 };
 
@@ -67,6 +114,8 @@ export const projetAPI = {
   getAdminProjets: () => api.get('/projets/admin'),
   getProjetById: (id) => api.get(`/projets/${id}`),
   createProjet: (data) => api.post('/projets', data),
+  updateProjet: (id, data) => api.put(`/projets/${id}`, data),
+  deleteProjet: (id) => api.delete(`/projets/${id}`),
   getEmployes: () => api.get('/projets/employes'),
   assignEmployes: (data) => api.post('/projets/assign', data),
   respondToProjet: (id, data) => api.post(`/projets/${id}/reponse`, data),

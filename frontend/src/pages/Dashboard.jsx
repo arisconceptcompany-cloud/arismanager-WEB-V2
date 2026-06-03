@@ -28,12 +28,11 @@ function Dashboard() {
       const year = currentMonth.getFullYear();
       const month = currentMonth.getMonth() + 1;
 
-      const [pointages, statsConge, projets, congesList, pointageStatsAPI] = await Promise.all([
+      const [pointages, statsConge, projets, congesList] = await Promise.all([
         pointageAPI.getPointages(),
         congeAPI.getStats(),
         projetAPI.getProjets(),
         congeAPI.getConges(),
-        pointageAPI.getStats(year)
       ]);
 
       const pointagesMois = pointages.data.filter(p => {
@@ -41,21 +40,13 @@ function Dashboard() {
         return date.getMonth() + 1 === month && date.getFullYear() === year;
       });
 
-      // ✅ FIX 2 : Utiliser les stats du backend (qui compte correctement présent/retard/absent)
-      const statsFromAPI = pointageStatsAPI.data || [];
-      const pointageStats = statsFromAPI.reduce((acc, s) => ({
-        presents: acc.presents + Number(s.jours_present || 0),
-        retards:  acc.retards  + Number(s.jours_retard  || 0),
-        absents:  acc.absents  + Number(s.jours_absent  || 0),
-      }), { presents: 0, retards: 0, absents: 0 });
-
       const congeStats = statsConge.data.reduce((acc, curr) => ({
         approuves: acc.approuves + Number(curr.jours_approuves || 0),
         enAttente: acc.enAttente + Number(curr.jours_en_attente || 0)
       }), { approuves: 0, enAttente: 0 });
 
       setStats({
-        pointages: pointageStats,
+        pointages: { presents: 0, retards: 0, absents: 0 },
         conges: congeStats,
         projets: projets.data.length,
         dernierPointage: pointages.data[0] || null,
@@ -162,7 +153,13 @@ function Dashboard() {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
   };
 
-  const totalStats = stats.pointages.presents + stats.pointages.retards + stats.pointages.absents;
+  const monthlyStats = joursCalendrier.reduce((acc, jour) => {
+    if (jour.statut === 'present') acc.presents++;
+    else if (jour.statut === 'retard') acc.retards++;
+    else if (jour.statut === 'absent') acc.absents++;
+    return acc;
+  }, { presents: 0, retards: 0, absents: 0 });
+  const totalStats = monthlyStats.presents + monthlyStats.retards + monthlyStats.absents;
 
   return (
     <div>
@@ -297,7 +294,7 @@ function Dashboard() {
             <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
               <TrendingUp size={16} className="text-purple-400" />
             </div>
-            Taux de présence (cette année)
+            Taux de présence (ce mois)
           </h2>
           {totalStats > 0 ? (
             <div className="flex flex-col lg:flex-row items-center gap-4">
@@ -306,9 +303,9 @@ function Dashboard() {
                   <PieChart>
                     <Pie
                       data={[
-                        { name: 'Présents', value: stats.pointages.presents, color: '#22c55e' },
-                        { name: 'Retards',  value: stats.pointages.retards,  color: '#f59e0b' },
-                        { name: 'Absents',  value: stats.pointages.absents,  color: '#ef4444' }
+                        { name: "À l'heure", value: monthlyStats.presents, color: '#22c55e' },
+                        { name: 'Retards',  value: monthlyStats.retards,  color: '#f59e0b' },
+                        { name: 'Absents',  value: monthlyStats.absents,  color: '#ef4444' }
                       ]}
                       cx="50%"
                       cy="50%"
@@ -348,10 +345,10 @@ function Dashboard() {
                     <div className="w-8 h-8 rounded-lg bg-green-500/30 flex items-center justify-center">
                       <CheckCircle size={16} className="text-green-400" />
                     </div>
-                    <span className="text-white font-medium">Présents</span>
+                    <span className="text-white font-medium">À l'heure</span>
                   </div>
                   <div className="text-right">
-                    <div className="text-xl font-bold text-green-400">{stats.pointages.presents}</div>
+                    <div className="text-xl font-bold text-green-400">{monthlyStats.presents}</div>
                     <div className="text-[10px] text-green-400/60">jours</div>
                   </div>
                 </div>
@@ -363,7 +360,7 @@ function Dashboard() {
                     <span className="text-white font-medium">Retards</span>
                   </div>
                   <div className="text-right">
-                    <div className="text-xl font-bold text-amber-400">{stats.pointages.retards}</div>
+                    <div className="text-xl font-bold text-amber-400">{monthlyStats.retards}</div>
                     <div className="text-[10px] text-amber-400/60">jours</div>
                   </div>
                 </div>
@@ -375,7 +372,7 @@ function Dashboard() {
                     <span className="text-white font-medium">Absents</span>
                   </div>
                   <div className="text-right">
-                    <div className="text-xl font-bold text-red-400">{stats.pointages.absents}</div>
+                    <div className="text-xl font-bold text-red-400">{monthlyStats.absents}</div>
                     <div className="text-[10px] text-red-400/60">jours</div>
                   </div>
                 </div>

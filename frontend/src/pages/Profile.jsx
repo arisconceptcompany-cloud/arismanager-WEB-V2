@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { User, Mail, Phone, MapPin, Briefcase, Building2, Calendar, Camera, Upload, Check, X, Shield } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Briefcase, Building2, Calendar, Camera, Upload, Check, X, Shield, Trash2 } from 'lucide-react';
 import { employeAPI } from '../services/api';
 import { useUser } from '../context/UserContext';
 
@@ -93,6 +93,19 @@ const handlePhotoChange = async (e) => {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleDeletePhoto = () => {
+    if (!window.confirm('Voulez-vous vraiment supprimer votre photo de profil ?')) return;
+    const userId = initialUser?.id || profile?.id;
+    if (userId) {
+      localStorage.removeItem(`profilePhoto_${userId}`);
+    }
+    Object.keys(localStorage).forEach(k => {
+      if (k.startsWith('profilePhoto_')) localStorage.removeItem(k);
+    });
+    updateProfilePhoto(null);
+    showNotification('success', 'Photo supprimée');
   };
 
   const getInitials = (nom, prenom) => {
@@ -191,6 +204,16 @@ const handlePhotoChange = async (e) => {
             <Upload size={18} />
             Changer la photo
           </button>
+
+          {profilePhoto && (
+            <button
+              onClick={handleDeletePhoto}
+              className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg font-medium transition-colors border border-red-500/30"
+            >
+              <Trash2 size={18} />
+              Supprimer la photo
+            </button>
+          )}
         </div>
 
         <div className="lg:col-span-2 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6">

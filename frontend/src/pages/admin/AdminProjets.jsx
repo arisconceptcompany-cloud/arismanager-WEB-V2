@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FolderKanban, Calendar, Users, Plus, Check, X, Clock, ChevronDown, ChevronUp, Eye, UserPlus } from 'lucide-react';
+import { FolderKanban, Calendar, Users, Plus, Check, X, Clock, ChevronDown, ChevronUp, Eye, UserPlus, Edit, Trash2, AlertTriangle } from 'lucide-react';
 import { projetAPI } from '../../services/api';
 
 function AdminProjets() {
@@ -9,9 +9,14 @@ function AdminProjets() {
   const [selectedProjet, setSelectedProjet] = useState(null);
   const [approbations, setApprobations] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingProjet, setEditingProjet] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [projetToDelete, setProjetToDelete] = useState(null);
   const [expandedProjets, setExpandedProjets] = useState({});
   const [expandedEmployes, setExpandedEmployes] = useState({});
+  const [toast, setToast] = useState(null);
   const [newProjet, setNewProjet] = useState({
     titre: '',
     description: '',
@@ -186,6 +191,50 @@ function AdminProjets() {
     }));
   };
 
+  const showToast = (type, message) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 4000);
+  };
+
+  const openEditModal = (projet) => {
+    setEditingProjet(projet);
+    setShowEditModal(true);
+  };
+
+  const handleEditProjet = async (e) => {
+    e.preventDefault();
+    if (!editingProjet) return;
+    try {
+      await projetAPI.updateProjet(editingProjet.id, editingProjet);
+      setShowEditModal(false);
+      setEditingProjet(null);
+      showToast('success', 'Projet modifié avec succès');
+      fetchProjets();
+    } catch (error) {
+      console.error('Erreur modification projet:', error);
+      showToast('error', 'Erreur lors de la modification');
+    }
+  };
+
+  const confirmDelete = (projet) => {
+    setProjetToDelete(projet);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteProjet = async () => {
+    if (!projetToDelete) return;
+    try {
+      await projetAPI.deleteProjet(projetToDelete.id);
+      setShowDeleteModal(false);
+      setProjetToDelete(null);
+      showToast('success', 'Projet supprimé avec succès');
+      fetchProjets();
+    } catch (error) {
+      console.error('Erreur suppression projet:', error);
+      showToast('error', 'Erreur lors de la suppression');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-96">
@@ -315,6 +364,20 @@ function AdminProjets() {
                         title="Voir details"
                       >
                         <Eye size={18} className="text-blue-400" />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); openEditModal(projet); }}
+                        className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                        title="Modifier"
+                      >
+                        <Edit size={18} className="text-amber-400" />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); confirmDelete(projet); }}
+                        className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
+                        title="Supprimer"
+                      >
+                        <Trash2 size={18} className="text-red-400" />
                       </button>
                       {expandedProjets[projet.id] ? (
                         <ChevronUp size={20} className="text-white/50" />
@@ -606,6 +669,125 @@ function AdminProjets() {
                   className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Ajouter ({addingEmployes.employe_ids.length})
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {toast && (
+        <div className={`fixed top-6 right-6 z-[9999] flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl animate-slide-in min-w-[280px] ${
+          toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'
+        } text-white`}>
+          {toast.type === 'success' ? <Check size={20} /> : <AlertTriangle size={20} />}
+          <span className="font-medium">{toast.message}</span>
+        </div>
+      )}
+
+      {showEditModal && editingProjet && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => { setShowEditModal(false); setEditingProjet(null); }}>
+          <div className="bg-slate-800 rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-semibold text-white">Modifier le projet</h3>
+              <button onClick={() => { setShowEditModal(false); setEditingProjet(null); }} className="text-white/50 hover:text-white text-2xl">&times;</button>
+            </div>
+            <form onSubmit={handleEditProjet} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-1">Titre du projet *</label>
+                <input
+                  type="text"
+                  value={editingProjet.titre}
+                  onChange={(e) => setEditingProjet({ ...editingProjet, titre: e.target.value })}
+                  required
+                  className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-amber-500"
+                  placeholder="Nom du projet"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-1">Description</label>
+                <textarea
+                  value={editingProjet.description || ''}
+                  onChange={(e) => setEditingProjet({ ...editingProjet, description: e.target.value })}
+                  className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-amber-500 min-h-24"
+                  placeholder="Description du projet"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-white/80 mb-1">Date de debut *</label>
+                  <input
+                    type="date"
+                    value={editingProjet.date_debut || ''}
+                    onChange={(e) => setEditingProjet({ ...editingProjet, date_debut: e.target.value })}
+                    required
+                    className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-white/80 mb-1">Date de fin prevue *</label>
+                  <input
+                    type="date"
+                    value={editingProjet.date_fin_prevue || ''}
+                    onChange={(e) => setEditingProjet({ ...editingProjet, date_fin_prevue: e.target.value })}
+                    required
+                    className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-1">Statut</label>
+                <select
+                  value={editingProjet.statut || 'en_cours'}
+                  onChange={(e) => setEditingProjet({ ...editingProjet, statut: e.target.value })}
+                  className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-amber-500"
+                >
+                  <option value="en_cours">En cours</option>
+                  <option value="termine">Terminé</option>
+                  <option value="en_attente">En attente</option>
+                  <option value="annule">Annulé</option>
+                </select>
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button type="button" onClick={() => { setShowEditModal(false); setEditingProjet(null); }} className="flex-1 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-lg font-medium">
+                  Annuler
+                </button>
+                <button type="submit" className="flex-1 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium">
+                  Enregistrer
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showDeleteModal && projetToDelete && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-800 rounded-xl w-full max-w-md">
+            <div className="p-6">
+              <div className="flex items-center justify-center mb-4">
+                <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center">
+                  <AlertTriangle size={32} className="text-red-400" />
+                </div>
+              </div>
+              <h3 className="text-xl font-semibold text-white text-center mb-2">Confirmer la suppression</h3>
+              <p className="text-white/70 text-center mb-6">
+                Êtes-vous sûr de vouloir supprimer le projet <span className="text-white font-medium">{projetToDelete.titre}</span> ?
+                <br />
+                <span className="text-red-400 text-sm">Cette action est irreversible.</span>
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { setShowDeleteModal(false); setProjetToDelete(null); }}
+                  className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleDeleteProjet}
+                  className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                >
+                  Supprimer
                 </button>
               </div>
             </div>

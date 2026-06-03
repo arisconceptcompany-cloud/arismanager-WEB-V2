@@ -118,7 +118,7 @@ function Conges() {
   };
 
   const getTypeLabel = (type) => {
-    const types = { annuel: 'Congé annuel', maladie: 'Congé maladie', maternite: 'Congé maternité', paternite: 'Congé paternité', sans_solde: 'Sans solde' };
+    const types = { annuel: 'Congé annuel', maladie: 'Congé maladie', maternite: 'Congé maternité', paternite: 'Congé paternité', sans_solde: 'Sans solde', autres: 'Autres' };
     return types[type] || type;
   };
 
@@ -138,6 +138,13 @@ function Conges() {
         <button onClick={() => setShowModal(true)} className="flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all w-full sm:w-auto justify-center">
           <Plus size={18} /> <span className="sm:hidden">Nouvelle</span><span className="hidden sm:inline">Nouvelle demande</span>
         </button>
+      </div>
+
+      <div className="mb-6 p-4 bg-amber-500/20 border border-amber-500/30 rounded-xl flex items-center gap-3">
+        <div className="w-8 h-8 rounded-lg bg-amber-500/30 flex items-center justify-center shrink-0">
+          <Clock size={18} className="text-amber-400" />
+        </div>
+        <p className="text-amber-300 text-sm font-medium">En cours de maintenance</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 md:mb-8">
@@ -243,12 +250,13 @@ function Conges() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1">Type de congé</label>
-                <select value={newConge.type_conge} onChange={(e) => setNewConge({ ...newConge, type_conge: e.target.value })} className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-blue-500">
-                  <option value="annuel">Congé annuel</option>
-                  <option value="maladie">Congé maladie</option>
-                  <option value="maternite">Congé maternité</option>
-                  <option value="paternite">Congé paternité</option>
-                  <option value="sans_solde">Sans solde</option>
+                <select value={newConge.type_conge} onChange={(e) => setNewConge({ ...newConge, type_conge: e.target.value })} className="w-full px-4 py-2 bg-slate-800 border border-white/20 rounded-lg text-white focus:outline-none focus:border-blue-500" style={{ colorScheme: 'dark' }}>
+                  <option value="annuel" className="bg-slate-800 text-white" style={{ background: '#1e293b', color: 'white' }}>Congé annuel</option>
+                  <option value="maladie" className="bg-slate-800 text-white" style={{ background: '#1e293b', color: 'white' }}>Congé maladie</option>
+                  <option value="maternite" className="bg-slate-800 text-white" style={{ background: '#1e293b', color: 'white' }}>Congé maternité</option>
+                  <option value="paternite" className="bg-slate-800 text-white" style={{ background: '#1e293b', color: 'white' }}>Congé paternité</option>
+                  <option value="sans_solde" className="bg-slate-800 text-white" style={{ background: '#1e293b', color: 'white' }}>Sans solde</option>
+                  <option value="autres" className="bg-slate-800 text-white" style={{ background: '#1e293b', color: 'white' }}>Autres</option>
                 </select>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
