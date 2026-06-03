@@ -21,7 +21,13 @@ export const UserProvider = ({ children, initialUser }) => {
       const userId = initialUser.id;
       
       const savedPhoto = localStorage.getItem(`profilePhoto_${userId}`);
-      
+      const photoDeleted = localStorage.getItem(`photoDeleted_${userId}`);
+
+      if (photoDeleted === 'true') {
+        setProfilePhoto(null);
+        return;
+      }
+
       if (savedPhoto && savedPhoto !== 'null' && savedPhoto !== 'undefined' && savedPhoto.length < 100000) {
         if (savedPhoto.startsWith('data:') || savedPhoto.startsWith('http')) {
           setProfilePhoto(savedPhoto);

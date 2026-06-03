@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { User, Mail, Phone, MapPin, Briefcase, Building2, Calendar, Camera, Upload, Check, X, Shield, Trash2 } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Briefcase, Building2, Calendar, Camera, Upload, Check, X, Shield, Trash2, AlertTriangle } from 'lucide-react';
 import { employeAPI } from '../services/api';
 import { useUser } from '../context/UserContext';
 
@@ -8,6 +8,7 @@ function Profile() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [notification, setNotification] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const fileInputRef = useRef(null);
   const { updateProfilePhoto, profilePhoto, user: initialUser } = useUser();
 
@@ -40,6 +41,10 @@ const handlePhotoChange = async (e) => {
       }
       
       setUploading(true);
+      const userId = initialUser?.id || profile?.id;
+      if (userId) {
+        localStorage.removeItem(`photoDeleted_${userId}`);
+      }
       const reader = new FileReader();
       reader.onloadend = async () => {
         const base64 = reader.result;
@@ -95,17 +100,21 @@ const handlePhotoChange = async (e) => {
     }
   };
 
-  const handleDeletePhoto = () => {
-    if (!window.confirm('Voulez-vous vraiment supprimer votre photo de profil ?')) return;
+  const handleDeletePhoto = async () => {
     const userId = initialUser?.id || profile?.id;
     if (userId) {
       localStorage.removeItem(`profilePhoto_${userId}`);
+      localStorage.setItem(`photoDeleted_${userId}`, 'true');
     }
     Object.keys(localStorage).forEach(k => {
       if (k.startsWith('profilePhoto_')) localStorage.removeItem(k);
     });
     updateProfilePhoto(null);
-    showNotification('success', 'Photo supprimée');
+    setShowDeleteModal(false);
+    showNotification('success', 'Photo supprimée avec succès');
+    try {
+      await employeAPI.deletePhoto();
+    } catch (_) {}
   };
 
   const getInitials = (nom, prenom) => {
@@ -123,9 +132,11 @@ const handlePhotoChange = async (e) => {
   return (
     <div className="relative">
       {notification && (
-        <div className="fixed top-6 right-6 z-[9999] flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl bg-green-600 text-white animate-slide-in min-w-[280px]">
+        <div className={`fixed top-6 right-6 z-[9999] flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl text-white animate-slide-in min-w-[280px] ${
+          notification.type === 'error' ? 'bg-red-600' : 'bg-green-600'
+        }`}>
           <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-            <Check size={20} />
+            {notification.type === 'error' ? <X size={20} /> : <Check size={20} />}
           </div>
           <span className="font-medium">{notification.message}</span>
         </div>
@@ -207,7 +218,7 @@ const handlePhotoChange = async (e) => {
 
           {profilePhoto && (
             <button
-              onClick={handleDeletePhoto}
+              onClick={() => setShowDeleteModal(true)}
               className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg font-medium transition-colors border border-red-500/30"
             >
               <Trash2 size={18} />
@@ -295,6 +306,34 @@ const handlePhotoChange = async (e) => {
           </div>
         </div>
       </div>
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-slate-800 rounded-2xl p-6 max-w-sm w-full mx-4 border border-white/20 shadow-2xl">
+            <div className="text-center">
+              <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-red-500/20 flex items-center justify-center">
+                <AlertTriangle size={28} className="text-red-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">Supprimer la photo</h3>
+              <p className="text-white/70 text-sm mb-6">Voulez-vous vraiment supprimer votre photo de profil ?</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="flex-1 px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-lg font-medium transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleDeletePhoto}
+                  className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+                >
+                  Supprimer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

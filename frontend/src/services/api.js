@@ -92,7 +92,8 @@ export const authAPI = {
 export const employeAPI = {
   getProfile: () => api.get('/employe/profile'),
   updateProfile: (data) => api.put('/employe/profile', data),
-  uploadPhoto: (photoBase64) => api.post('/employe/photo', { photo: photoBase64 })
+  uploadPhoto: (photoBase64) => api.post('/employe/photo', { photo: photoBase64 }),
+  deletePhoto: () => api.delete('/employe/photo')
 };
 
 export const pointageAPI = {
