@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileText, Check, X, Clock, User } from 'lucide-react';
+import { FileText, Check, X, Trash2, AlertTriangle, Clock } from 'lucide-react';
 import api from '../../services/api';
 
 function AdminRapports() {
@@ -7,6 +7,8 @@ function AdminRapports() {
   const [employes, setEmployes] = useState([]);
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [rapportToDelete, setRapportToDelete] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -29,11 +31,29 @@ function AdminRapports() {
 
   const handleAction = async (id, action) => {
     try {
-      await api.put(`/rapports/${id}/${action}`);
+      await api.put(`/admin/rapports/${id}/${action}`);
       fetchData();
     } catch (error) {
       console.error('Erreur action:', error);
       alert('Erreur lors de l\'action');
+    }
+  };
+
+  const handleDeleteClick = (rapport) => {
+    setRapportToDelete(rapport);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!rapportToDelete) return;
+    try {
+      await api.delete(`/admin/rapports/${rapportToDelete.id}`);
+      setShowDeleteModal(false);
+      setRapportToDelete(null);
+      fetchData();
+    } catch (error) {
+      console.error('Erreur suppression:', error);
+      alert('Erreur lors de la suppression');
     }
   };
 
@@ -160,12 +180,50 @@ function AdminRapports() {
                     <Check size={18} />
                     Approuver
                   </button>
+                  <button
+                    onClick={() => handleDeleteClick(rapport)}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg transition-colors"
+                  >
+                    <Trash2 size={18} />
+                    Supprimer
+                  </button>
+                </div>
+              )}
+              {rapport.statut !== 'soumis' && (
+                <div className="mt-4 flex justify-end">
+                  <button
+                    onClick={() => handleDeleteClick(rapport)}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg transition-colors"
+                  >
+                    <Trash2 size={18} />
+                    Supprimer
+                  </button>
                 </div>
               )}
             </div>
           ))
         )}
       </div>
+
+      {showDeleteModal && rapportToDelete && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-800 rounded-xl p-6 w-full max-w-md backdrop-blur-md border border-red-500/20">
+            <div className="flex flex-col items-center text-center mb-6">
+              <div className="w-14 h-14 bg-red-500/20 rounded-full flex items-center justify-center mb-4">
+                <AlertTriangle size={28} className="text-red-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">Confirmer la suppression</h3>
+              <p className="text-white/70">
+                Êtes-vous sûr de vouloir supprimer le compte rendu <strong className="text-white">"{rapportToDelete.titre}"</strong> de <strong className="text-white">{rapportToDelete.prenom} {rapportToDelete.nom}</strong> ? Cette action est irréversible.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => { setShowDeleteModal(false); setRapportToDelete(null); }} className="flex-1 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-lg font-medium">Annuler</button>
+              <button onClick={handleDeleteConfirm} className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium">Supprimer</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

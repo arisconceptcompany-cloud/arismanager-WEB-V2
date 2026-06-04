@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { FileText, Plus, Send } from 'lucide-react';
+import { FileText, Plus, Send, Trash2, AlertTriangle } from 'lucide-react';
 import { rapportAPI } from '../services/api';
 
 function Rapports() {
   const [rapports, setRapports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [rapportToDelete, setRapportToDelete] = useState(null);
   const [editingRapport, setEditingRapport] = useState(null);
   const [formData, setFormData] = useState({ titre: '', contenu: '', type: 'quotidien', date_rapport: new Date().toISOString().split('T')[0] });
 
@@ -52,6 +54,23 @@ function Rapports() {
     setEditingRapport(rapport);
     setFormData({ titre: rapport.titre, contenu: rapport.contenu, type: rapport.type, date_rapport: rapport.date_rapport });
     setShowModal(true);
+  };
+
+  const handleDeleteClick = (rapport) => {
+    setRapportToDelete(rapport);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!rapportToDelete) return;
+    try {
+      await rapportAPI.deleteRapport(rapportToDelete.id);
+      setShowDeleteModal(false);
+      setRapportToDelete(null);
+      fetchRapports();
+    } catch (error) {
+      console.error('Erreur suppression rapport:', error);
+    }
   };
 
   const getStatutBadge = (statut) => {
@@ -142,6 +161,12 @@ function Rapports() {
                         <div className="flex gap-2">
                           <button onClick={() => handleSubmitRapport(rapport.id)} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium"><Send size={12} /> Soumettre</button>
                           <button onClick={() => handleEdit(rapport)} className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-medium">Modifier</button>
+                          <button onClick={() => handleDeleteClick(rapport)} className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600/20 hover:bg-red-600/40 text-red-400 rounded-lg text-xs font-medium"><Trash2 size={12} /> Supprimer</button>
+                        </div>
+                      )}
+                      {rapport.statut !== 'brouillon' && (
+                        <div className="flex gap-2">
+                          <button onClick={() => handleDeleteClick(rapport)} className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600/20 hover:bg-red-600/40 text-red-400 rounded-lg text-xs font-medium"><Trash2 size={12} /> Supprimer</button>
                         </div>
                       )}
                     </td>
@@ -188,6 +213,24 @@ function Rapports() {
                 <button type="submit" className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium">{editingRapport ? 'Mettre à jour' : 'Enregistrer'}</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showDeleteModal && rapportToDelete && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-800 rounded-xl p-6 w-full max-w-md backdrop-blur-md border border-red-500/20">
+            <div className="flex flex-col items-center text-center mb-6">
+              <div className="w-14 h-14 bg-red-500/20 rounded-full flex items-center justify-center mb-4">
+                <AlertTriangle size={28} className="text-red-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">Confirmer la suppression</h3>
+              <p className="text-white/70">Êtes-vous sûr de vouloir supprimer le compte rendu <strong className="text-white">"{rapportToDelete.titre}"</strong> ? Cette action est irréversible.</p>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => { setShowDeleteModal(false); setRapportToDelete(null); }} className="flex-1 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-lg font-medium">Annuler</button>
+              <button onClick={handleDeleteConfirm} className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium">Supprimer</button>
+            </div>
           </div>
         </div>
       )}

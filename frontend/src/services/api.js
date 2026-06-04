@@ -141,7 +141,8 @@ export const rapportAPI = {
   getRapports: () => api.get('/rapports'),
   createRapport: (data) => api.post('/rapports', data),
   updateRapport: (id, data) => api.put(`/rapports/${id}`, data),
-  submitRapport: (id) => api.put(`/rapports/${id}/submit`)
+  submitRapport: (id) => api.put(`/rapports/${id}/submit`),
+  deleteRapport: (id) => api.delete(`/rapports/${id}`)
 };
 
 export const chatAPI = {
