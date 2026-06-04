@@ -1,93 +1,29 @@
 import { useState, useEffect } from 'react';
-import { DollarSign, Search, Edit, X, Save, User, Calendar } from 'lucide-react';
-import api, { DEFAULT_AVATAR } from '../../services/api';
+import { FileText, Upload, Download, X, Trash2, File, Search } from 'lucide-react';
+import api, { fichePaieAPI, DEFAULT_AVATAR } from '../../services/api';
 
 function AdminSalaires() {
-  const [salaires, setSalaires] = useState([]);
+  const [fiches, setFiches] = useState([]);
   const [employes, setEmployes] = useState([]);
-  const [selectedSalaire, setSelectedSalaire] = useState(null);
-  const [editingSalaire, setEditingSalaire] = useState(null);
-  const [formData, setFormData] = useState({
-    salaire_base: '',
-    primes: '',
-    deductions: ''
-  });
-  const [showModal, setShowModal] = useState(false);
-  const [filterEmploye, setFilterEmploye] = useState('all');
-  const [filterMois, setFilterMois] = useState('');
   const [loading, setLoading] = useState(true);
-  const [photoCache, setPhotoCache] = useState({});
+  const [uploading, setUploading] = useState(false);
 
-  const preloadPhotos = (employeeList) => {
-    const newCache = {};
-    employeeList.forEach(emp => {
-      const storedPhoto = localStorage.getItem(`profilePhoto_${emp.id}`);
-      if (storedPhoto && (storedPhoto.startsWith('data:') || storedPhoto.startsWith('http'))) {
-        newCache[emp.id] = storedPhoto;
-      } else if (emp.photo && emp.photo.startsWith('data:')) {
-        newCache[emp.id] = emp.photo;
-      } else {
-        newCache[emp.id] = null;
-      }
-    });
-    setPhotoCache(newCache);
-    
-    const toFetch = employeeList.filter(emp => !newCache[emp.id] && !emp.photo?.startsWith('data:'));
-    toFetch.forEach(emp => {
-      api.get(`/photos/employe/${emp.id}`, { responseType: 'blob' })
-        .then(response => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            const base64 = reader.result;
-            if (base64.length < 80000) {
-              localStorage.setItem(`profilePhoto_${emp.id}`, base64);
-            }
-            setPhotoCache(prev => ({ ...prev, [emp.id]: base64 }));
-          };
-          reader.readAsDataURL(response.data);
-        })
-        .catch(() => {
-          setPhotoCache(prev => ({ ...prev, [emp.id]: 'default' }));
-        });
-    });
-  };
+  const [selectedEmploye, setSelectedEmploye] = useState('');
+  const [selectedMois, setSelectedMois] = useState('');
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [filterEmploye, setFilterEmploye] = useState('all');
+  const [filterAnnee, setFilterAnnee] = useState('');
 
-  const getPhotoUrl = (employeId) => {
-    const cached = photoCache[employeId];
-    if (cached === 'default') {
-      const emp = employes.find(e => e.id === employeId);
-      return `${DEFAULT_AVATAR}&name=${emp?.prenom || ''}+${emp?.nom || ''}`;
-    }
-    if (cached) return cached;
-    const storedPhoto = localStorage.getItem(`profilePhoto_${employeId}`);
-    if (storedPhoto && (storedPhoto.startsWith('data:') || storedPhoto.startsWith('http'))) {
-      return storedPhoto;
-    }
-    const emp = employes.find(e => e.id === employeId);
-    if (emp?.photo && emp.photo.startsWith('data:')) {
-      return emp.photo;
-    }
-    return null;
-  };
-
-  const handlePhotoError = (e) => {
-    e.target.style.display = 'none';
-    e.target.nextSibling.style.display = 'flex';
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
     try {
-      const [salaireRes, empRes] = await Promise.all([
-        api.get('/admin/salaires'),
+      const [fichesRes, empRes] = await Promise.all([
+        fichePaieAPI.admin.getAll(),
         api.get('/admin/employes')
       ]);
-      setSalaires(salaireRes.data || []);
+      setFiches(fichesRes.data || []);
       setEmployes(empRes.data || []);
-      preloadPhotos(empRes.data || []);
     } catch (error) {
       console.error('Erreur chargement:', error);
     } finally {
@@ -95,292 +31,274 @@ function AdminSalaires() {
     }
   };
 
-  const filteredSalaires = salaires.filter(s => {
-    if (filterEmploye !== 'all' && s.employe_id !== parseInt(filterEmploye)) return false;
-    if (filterMois && !`${s.annee}-${String(s.mois).padStart(2, '0')}`.includes(filterMois)) return false;
-    return true;
-  });
-
-  const openEditModal = (salaire) => {
-    setEditingSalaire(salaire);
-    setFormData({
-      salaire_base: salaire.salaire_base,
-      primes: salaire.primes || 0,
-      deductions: salaire.deductions || 0
-    });
-    setShowModal(true);
+  const formatMois = (mois, annee) => {
+    const moisLabels = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+    return `${moisLabels[mois - 1] || mois} ${annee}`;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const salaire_net = parseFloat(formData.salaire_base) + parseFloat(formData.primes || 0) - parseFloat(formData.deductions || 0);
-      await api.put(`/admin/salaires/${editingSalaire.id}`, {
-        ...formData,
-        salaire_net
-      });
-      setShowModal(false);
-      fetchData();
-    } catch (error) {
-      console.error('Erreur sauvegarde:', error);
-      alert('Erreur lors de la sauvegarde');
-    }
-  };
-
-  const getEmployeName = (employeId) => {
-    const emp = employes.find(e => e.id === employeId);
+  const getEmployeName = (id) => {
+    const emp = employes.find(e => e.id === id);
     return emp ? `${emp.prenom} ${emp.nom}` : '-';
   };
 
-  const formatMonth = (mois, annee) => {
-    const date = new Date(annee, mois - 1);
-    return date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  const getEmploye = (id) => employes.find(e => e.id === id);
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) setSelectedFile(file);
   };
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('fr-MG', { style: 'currency', currency: 'MGA' }).format(amount);
+  const handleUpload = async (e) => {
+    e.preventDefault();
+    if (!selectedFile || !selectedEmploye || !selectedMois) return;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('fichier', selectedFile);
+      formData.append('employe_id', selectedEmploye);
+      formData.append('mois', parseInt(selectedMois.split('-')[1]));
+      formData.append('annee', parseInt(selectedMois.split('-')[0]));
+
+      await fichePaieAPI.admin.upload(formData);
+      setSelectedFile(null);
+      setSelectedEmploye('');
+      setSelectedMois('');
+      document.getElementById('fileInput').value = '';
+      fetchData();
+    } catch (error) {
+      console.error('Erreur upload:', error);
+    } finally {
+      setUploading(false);
+    }
   };
 
-  const getStatusBadge = (statut) => {
-    const badges = {
-      paye: 'bg-green-500',
-      en_attente: 'bg-yellow-500'
-    };
-    const labels = {
-      paye: 'Payé',
-      en_attente: 'En attente'
-    };
-    return (
-      <span className={`px-2 py-1 rounded-full text-xs text-white ${badges[statut] || 'bg-gray-500'}`}>
-        {labels[statut] || statut}
-      </span>
-    );
+  const handleDelete = async (id) => {
+    if (!window.confirm('Supprimer cette fiche de paie ?')) return;
+    try {
+      await fichePaieAPI.admin.delete(id);
+      fetchData();
+    } catch (error) {
+      console.error('Erreur suppression:', error);
+    }
   };
+
+  const handleDownload = async (fiche) => {
+    try {
+      const res = await fichePaieAPI.downloadFiche(fiche.id);
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fiche.nom || `Fiche_Paie_${fiche.mois}_${fiche.annee}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Erreur téléchargement:', error);
+    }
+  };
+
+  const employesAvecFiche = new Set();
+  if (selectedMois) {
+    const [annee, mois] = selectedMois.split('-').map(Number);
+    fiches.forEach(f => {
+      if (f.mois === mois && f.annee === annee) {
+        employesAvecFiche.add(f.employe_id);
+      }
+    });
+  }
+  const employesDisponibles = employes.filter(emp => !employesAvecFiche.has(emp.id));
+
+  const filteredFiches = fiches.filter(f => {
+    if (filterEmploye !== 'all' && f.employe_id !== parseInt(filterEmploye)) return false;
+    if (filterAnnee && `${f.annee}-${String(f.mois).padStart(2, '0')}` !== filterAnnee) return false;
+    return true;
+  });
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-96">
-        <p className="text-white bg-black/50 px-4 py-2 rounded-lg">Chargement...</p>
-      </div>
-    );
+    return <div className="flex items-center justify-center min-h-96"><p className="text-white bg-black/50 px-4 py-2 rounded-lg">Chargement...</p></div>;
   }
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Gestion des Salaires</h1>
-          <p className="text-white/70">Gérez les salaires des employés</p>
-        </div>
+      <div className="mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Fiches de Paie</h1>
+        <p className="text-white/70">Envoyer et gérer les fiches de paie des employés</p>
+      </div>
+
+      <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6 mb-8">
+        <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+          <Upload size={24} /> Envoyer une fiche de paie
+        </h2>
+
+        <form onSubmit={handleUpload} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <select
+              value={selectedEmploye}
+              onChange={(e) => setSelectedEmploye(e.target.value)}
+              required
+              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-red-500"
+            >
+              <option value="">Sélectionner un employé</option>
+              {employesDisponibles.length === 0 && selectedMois ? (
+                <option value="" disabled>Tous les employés ont déjà une fiche pour ce mois</option>
+              ) : (
+                employesDisponibles.map(emp => (
+                  <option key={emp.id} value={emp.id}>{emp.prenom} {emp.nom} ({emp.matricule})</option>
+                ))
+              )}
+            </select>
+
+            <input
+              type="month"
+              value={selectedMois}
+              onChange={(e) => setSelectedMois(e.target.value)}
+              required
+              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-red-500"
+            />
+
+            <input
+              id="fileInput"
+              type="file"
+              accept=".pdf"
+              onChange={handleFileSelect}
+              required
+              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-red-600 file:text-white file:cursor-pointer"
+            />
+          </div>
+
+          {selectedFile && (
+            <div className="flex items-center justify-between p-4 bg-white/10 rounded-lg">
+              <div className="flex items-center gap-3">
+                <File size={24} className="text-red-400" />
+                <div>
+                  <p className="text-white font-medium">{selectedFile.name}</p>
+                  <p className="text-white/50 text-sm">
+                    {(selectedFile.size / 1024).toFixed(1)} KB
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setSelectedFile(null); document.getElementById('fileInput').value = ''; }}
+                className="text-white/50 hover:text-white"
+              >
+                <X size={20} />
+              </button>
+            </div>
+          )}
+
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={!selectedFile || !selectedEmploye || !selectedMois || uploading}
+              className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+            >
+              {uploading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Envoi en cours...
+                </>
+              ) : (
+                <>
+                  <Upload size={20} />
+                  Envoyer la fiche de paie
+                </>
+              )}
+            </button>
+          </div>
+        </form>
       </div>
 
       <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6 mb-6">
         <div className="flex flex-wrap gap-4">
-          <select
-            value={filterEmploye}
-            onChange={(e) => setFilterEmploye(e.target.value)}
-            className="px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-red-500"
-          >
-            <option value="all">Tous les employés</option>
-            {employes.map(emp => (
-              <option key={emp.id} value={emp.id}>{emp.prenom} {emp.nom}</option>
-            ))}
-          </select>
+          <div className="flex items-center gap-2">
+            <Search size={18} className="text-white/50" />
+            <select
+              value={filterEmploye}
+              onChange={(e) => setFilterEmploye(e.target.value)}
+              className="px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-red-500"
+            >
+              <option value="all">Tous les employés</option>
+              {employes.map(emp => (
+                <option key={emp.id} value={emp.id}>{emp.prenom} {emp.nom}</option>
+              ))}
+            </select>
+          </div>
           <input
             type="month"
-            value={filterMois}
-            onChange={(e) => setFilterMois(e.target.value)}
+            value={filterAnnee}
+            onChange={(e) => setFilterAnnee(e.target.value)}
             className="px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-red-500"
           />
         </div>
       </div>
 
       <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden">
-        {/* Header desktop */}
-        <div className="hidden md:grid md:grid-cols-8 text-left text-white/50 border-b border-white/20 bg-white/5 p-4 gap-4">
-          <div className="md:col-span-1">Employé</div>
-          <div className="md:col-span-1">Période</div>
-          <div className="md:col-span-1">Salaire Base</div>
-          <div className="md:col-span-1">Primes</div>
-          <div className="md:col-span-1">Déductions</div>
-          <div className="md:col-span-1">Salaire Net</div>
-          <div className="md:col-span-1">Statut</div>
-          <div className="md:col-span-1 text-right">Actions</div>
+        <div className="p-6 border-b border-white/20">
+          <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+            <FileText size={24} /> Fiches de paie envoyées
+          </h2>
         </div>
-        
-        {/* Contenu mobile et desktop */}
-        <div className="divide-y divide-white/10">
-          {filteredSalaires.map(salaire => (
-            <div key={salaire.id} className="p-4 hover:bg-white/5">
-              {/* Mobile card */}
-              <div className="md:hidden space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {(() => {
-                      const photoUrl = getPhotoUrl(salaire.employe_id);
-                      const emp = employes.find(e => e.id === salaire.employe_id);
-                      return (
-                        <>
-                          {photoUrl ? (
-                            <img src={photoUrl} alt="" className="w-10 h-10 rounded-full object-cover" onError={handlePhotoError} />
-                          ) : (
-                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-                              {emp?.prenom?.[0]}{emp?.nom?.[0]}
-                            </div>
-                          )}
-                        </>
-                      );
-                    })()}
-                    <div>
-                      <p className="text-white font-medium">{getEmployeName(salaire.employe_id)}</p>
-                      <p className="text-white/50 text-sm">{formatMonth(salaire.mois, salaire.annee)}</p>
+
+        {filteredFiches.length === 0 ? (
+          <div className="p-12 text-center">
+            <FileText size={64} className="mx-auto text-white/30 mb-4" />
+            <h3 className="text-lg font-semibold text-white mb-2">Aucune fiche de paie</h3>
+            <p className="text-white/60">Les fiches de paie envoyées apparaîtront ici</p>
+          </div>
+        ) : (
+          <div className="space-y-3 p-6">
+            {filteredFiches.map((fiche) => {
+              const emp = getEmploye(fiche.employe_id);
+              return (
+                <div
+                  key={fiche.id}
+                  className="flex items-center justify-between p-4 bg-white/10 rounded-lg hover:bg-white/15 transition-colors"
+                >
+                  <div className="flex items-center gap-4 min-w-0">
+                    {emp?.photo ? (
+                      <img src={emp.photo} alt="" className="w-10 h-10 rounded-full object-cover"
+                        onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                      />
+                    ) : null}
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm ${emp?.photo ? 'hidden' : 'bg-gradient-to-br from-red-500 to-orange-600'}`}
+                    >
+                      {emp?.prenom?.[0]}{emp?.nom?.[0]}
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-white font-medium truncate">
+                        {getEmployeName(fiche.employe_id)}
+                      </h3>
+                      <p className="text-sm text-white/50">
+                        {formatMois(fiche.mois, fiche.annee)} — {fiche.nom || 'Fiche de paie'}
+                      </p>
                     </div>
                   </div>
-                  {getStatusBadge(salaire.statut_paiement)}
-                </div>
-                <div className="grid grid-cols-3 gap-2 text-sm">
-                  <div className="bg-white/5 rounded-lg p-2">
-                    <p className="text-white/50 text-xs">Base</p>
-                    <p className="text-white font-medium">{formatCurrency(salaire.salaire_base)}</p>
-                  </div>
-                  <div className="bg-white/5 rounded-lg p-2">
-                    <p className="text-white/50 text-xs">Primes</p>
-                    <p className="text-green-400">+{formatCurrency(salaire.primes || 0)}</p>
-                  </div>
-                  <div className="bg-white/5 rounded-lg p-2">
-                    <p className="text-white/50 text-xs">Déductions</p>
-                    <p className="text-red-400">-{formatCurrency(salaire.deductions || 0)}</p>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <p className="text-white/50 text-sm">Net à payer</p>
-                  <p className="text-white font-bold text-lg">{formatCurrency(salaire.salaire_net)}</p>
-                </div>
-                <button
-                  onClick={() => openEditModal(salaire)}
-                  className="w-full py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg transition-colors flex items-center justify-center gap-2"
-                >
-                  <Edit size={16} /> Modifier
-                </button>
-              </div>
-
-              {/* Desktop row */}
-              <div className="hidden md:grid md:grid-cols-8 items-center gap-4">
-                <div className="md:col-span-1 flex items-center gap-3">
-                  {(() => {
-                    const photoUrl = getPhotoUrl(salaire.employe_id);
-                    const emp = employes.find(e => e.id === salaire.employe_id);
-                    return (
-                      <>
-                        {photoUrl ? (
-                          <img src={photoUrl} alt="" className="w-8 h-8 rounded-full object-cover" onError={handlePhotoError} />
-                        ) : (
-                          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
-                            {emp?.prenom?.[0]}{emp?.nom?.[0]}
-                          </div>
-                        )}
-                        <span className="text-white">{getEmployeName(salaire.employe_id)}</span>
-                      </>
-                    );
-                  })()}
-                </div>
-                <div className="md:col-span-1 text-white">{formatMonth(salaire.mois, salaire.annee)}</div>
-                <div className="md:col-span-1 text-white">{formatCurrency(salaire.salaire_base)}</div>
-                <div className="md:col-span-1 text-green-400">+{formatCurrency(salaire.primes || 0)}</div>
-                <div className="md:col-span-1 text-red-400">-{formatCurrency(salaire.deductions || 0)}</div>
-                <div className="md:col-span-1 text-white font-semibold">{formatCurrency(salaire.salaire_net)}</div>
-                <div className="md:col-span-1">{getStatusBadge(salaire.statut_paiement)}</div>
-                <div className="md:col-span-1 text-right">
-                  <button onClick={() => openEditModal(salaire)} className="p-2 hover:bg-white/10 rounded-lg text-white/70 hover:text-white transition-colors">
-                    <Edit size={18} />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {showModal && editingSalaire && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowModal(false)}>
-          <div className="bg-slate-800 rounded-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-            <div className="p-6 border-b border-white/20 flex items-center justify-between">
-              <h3 className="text-xl font-semibold text-white">Modifier le Salaire</h3>
-              <button onClick={() => setShowModal(false)} className="text-white/50 hover:text-white">
-                <X size={24} />
-              </button>
-            </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div className="bg-white/10 rounded-lg p-4 mb-4">
-                <div className="flex items-center gap-3">
-                  <User size={20} className="text-white/50" />
-                  <div>
-                    <p className="text-white font-medium">{getEmployeName(editingSalaire.employe_id)}</p>
-                    <p className="text-white/50 text-sm">{formatMonth(editingSalaire.mois, editingSalaire.annee)}</p>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <button
+                      onClick={() => handleDownload(fiche)}
+                      className="p-2 hover:bg-white/10 rounded-lg text-green-400 hover:text-green-300 transition-colors"
+                      title="Télécharger"
+                    >
+                      <Download size={20} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(fiche.id)}
+                      className="p-2 hover:bg-white/10 rounded-lg text-red-400 hover:text-red-300 transition-colors"
+                      title="Supprimer"
+                    >
+                      <Trash2 size={20} />
+                    </button>
                   </div>
                 </div>
-              </div>
-              <div>
-                <label className="block text-white/50 text-sm mb-1">Salaire de base</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  value={formData.salaire_base}
-                  onChange={(e) => setFormData({ ...formData, salaire_base: e.target.value })}
-                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-red-500"
-                />
-              </div>
-              <div>
-                <label className="block text-white/50 text-sm mb-1">Primes</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formData.primes}
-                  onChange={(e) => setFormData({ ...formData, primes: e.target.value })}
-                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-red-500"
-                />
-              </div>
-              <div>
-                <label className="block text-white/50 text-sm mb-1">Déductions</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formData.deductions}
-                  onChange={(e) => setFormData({ ...formData, deductions: e.target.value })}
-                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-red-500"
-                />
-              </div>
-              <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-4">
-                <p className="text-white/50 text-sm">Salaire Net</p>
-                <p className="text-green-400 text-2xl font-bold">
-                  {formatCurrency(
-                    (parseFloat(formData.salaire_base) || 0) +
-                    (parseFloat(formData.primes) || 0) -
-                    (parseFloat(formData.deductions) || 0)
-                  )}
-                </p>
-              </div>
-              <div className="flex justify-end gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
-                >
-                  <Save size={18} className="inline mr-2" />
-                  Enregistrer
-                </button>
-              </div>
-            </form>
+              );
+            })}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

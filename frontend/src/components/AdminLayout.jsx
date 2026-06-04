@@ -273,9 +273,9 @@ function AdminLayout({ user, children }) {
     { path: '/admin/employes', icon: Users, label: 'Employés' },
     { path: '/admin/presences', icon: Clock, label: 'Présences' },
     { path: '/admin/projets', icon: FolderKanban, label: 'Projets', badge: projetNotifCount },
-    { path: '/admin/salaires', icon: DollarSign, label: 'Salaires' },
+    { path: '/admin/salaires', icon: FileText, label: 'Fiche de Paye' },
     { path: '/admin/conges', icon: Calendar, label: 'Congés', badge: pendingConges },
-    { path: '/admin/rapports', icon: FileText, label: 'Rapports' },
+    { path: '/admin/rapports', icon: FileText, label: 'Compte Rendu' },
     { path: '/admin/badges', icon: Shield, label: 'Badges' },
   ];
 

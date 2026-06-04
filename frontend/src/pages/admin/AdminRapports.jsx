@@ -83,8 +83,8 @@ function AdminRapports() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Gestion des Rapports</h1>
-          <p className="text-white/70">Consultez et validez les rapports des employés</p>
+          <h1 className="text-3xl font-bold text-white mb-2">Gestion des Comptes Rendus</h1>
+          <p className="text-white/70">Consultez et validez les comptes rendus des employés</p>
         </div>
         <div className="flex gap-2">
           {['all', 'soumis', 'approuve', 'rejete'].map(f => (
@@ -107,7 +107,7 @@ function AdminRapports() {
         {filteredRapports.length === 0 ? (
           <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-12 text-center">
             <FileText size={48} className="mx-auto mb-4 text-white/30" />
-            <p className="text-white/50">Aucun rapport</p>
+            <p className="text-white/50">Aucun compte rendu</p>
           </div>
         ) : (
           filteredRapports.map(rapport => (

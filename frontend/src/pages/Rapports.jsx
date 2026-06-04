@@ -69,11 +69,11 @@ function Rapports() {
     <div>
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Mes Rapports</h1>
-          <p className="text-white/70">Rédigez et soumettez vos rapports d'activité</p>
+          <h1 className="text-3xl font-bold text-white mb-2">Mes Comptes Rendus</h1>
+          <p className="text-white/70">Rédigez et soumettez vos comptes rendus d'activité</p>
         </div>
         <button onClick={() => { setEditingRapport(null); setFormData({ titre: '', contenu: '', type: 'quotidien', date_rapport: new Date().toISOString().split('T')[0] }); setShowModal(true); }} className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors backdrop-blur-sm">
-          <Plus size={18} /> Nouveau rapport
+          <Plus size={18} /> Nouveau compte rendu
         </button>
       </div>
 
@@ -82,7 +82,7 @@ function Rapports() {
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center"><FileText className="text-blue-400" size={20} /></div>
             <div>
-              <h3 className="text-sm text-white/70">Total des rapports</h3>
+              <h3 className="text-sm text-white/70">Total des comptes rendus</h3>
               <div className="text-2xl font-bold text-white">{rapports.length}</div>
             </div>
           </div>
@@ -91,7 +91,7 @@ function Rapports() {
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center"><FileText className="text-green-400" size={20} /></div>
             <div>
-              <h3 className="text-sm text-white/70">Rapports approuvés</h3>
+              <h3 className="text-sm text-white/70">Comptes rendus approuvés</h3>
               <div className="text-2xl font-bold text-white">{rapports.filter(r => r.statut === 'approuve').length}</div>
             </div>
           </div>
@@ -109,14 +109,14 @@ function Rapports() {
 
       <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden">
         <div className="p-6 border-b border-white/20">
-          <h2 className="text-xl font-semibold text-white flex items-center gap-2"><FileText size={24} /> Historique des rapports</h2>
+          <h2 className="text-xl font-semibold text-white flex items-center gap-2"><FileText size={24} /> Historique des comptes rendus</h2>
         </div>
 
         {rapports.length === 0 ? (
           <div className="p-12 text-center">
             <FileText size={64} className="mx-auto text-white/30 mb-4" />
-            <h3 className="text-lg font-semibold text-white mb-2">Aucun rapport</h3>
-            <p className="text-white/60">Commencez par rédiger votre premier rapport</p>
+            <h3 className="text-lg font-semibold text-white mb-2">Aucun compte rendu</h3>
+            <p className="text-white/60">Commencez par rédiger votre premier compte rendu</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -157,17 +157,17 @@ function Rapports() {
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-slate-800 rounded-xl p-6 w-full max-w-lg backdrop-blur-md">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-semibold text-white">{editingRapport ? 'Modifier le rapport' : 'Nouveau rapport'}</h3>
+              <h3 className="text-xl font-semibold text-white">{editingRapport ? 'Modifier le compte rendu' : 'Nouveau compte rendu'}</h3>
               <button onClick={() => setShowModal(false)} className="text-white/50 hover:text-white text-2xl">&times;</button>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1">Titre</label>
-                <input type="text" value={formData.titre} onChange={(e) => setFormData({ ...formData, titre: e.target.value })} placeholder="Titre de votre rapport" required className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-blue-500" />
+                <input type="text" value={formData.titre} onChange={(e) => setFormData({ ...formData, titre: e.target.value })} placeholder="Titre de votre compte rendu" required className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-blue-500" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-white/80 mb-1">Type de rapport</label>
+                  <label className="block text-sm font-medium text-white/80 mb-1">Type de compte rendu</label>
                   <select value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })} className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-blue-500">
                     <option value="quotidien">Quotidien</option>
                     <option value="hebdomadaire">Hebdomadaire</option>
@@ -175,13 +175,13 @@ function Rapports() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-white/80 mb-1">Date du rapport</label>
+                  <label className="block text-sm font-medium text-white/80 mb-1">Date du compte rendu</label>
                   <input type="date" value={formData.date_rapport} onChange={(e) => setFormData({ ...formData, date_rapport: e.target.value })} required className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-blue-500" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1">Contenu</label>
-                <textarea value={formData.contenu} onChange={(e) => setFormData({ ...formData, contenu: e.target.value })} placeholder="Rédigez votre rapport..." rows={6} required className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-blue-500" />
+                <textarea value={formData.contenu} onChange={(e) => setFormData({ ...formData, contenu: e.target.value })} placeholder="Rédigez votre compte rendu..." rows={6} required className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-blue-500" />
               </div>
               <div className="flex gap-3 pt-4">
                 <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-lg font-medium">Annuler</button>

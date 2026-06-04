@@ -176,6 +176,18 @@ export const photoAPI = {
   getAllEmployePhotos: () => api.get('/photos/all/profil')
 };
 
+export const fichePaieAPI = {
+  getFiches: () => api.get('/fiches-paie'),
+  downloadFiche: (id) => api.get(`/fiches-paie/${id}/download`, { responseType: 'blob' }),
+  admin: {
+    getAll: () => api.get('/admin/fiches-paie'),
+    upload: (formData) => api.post('/admin/fiches-paie', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }),
+    delete: (id) => api.delete(`/admin/fiches-paie/${id}`),
+  }
+};
+
 export const badgeAPI = {
   getBadgeQR: (badgeId) => api.get(`/badges/qr/${badgeId}`),
   getEmployes: () => api.get('/badges/employes')

@@ -1,34 +1,51 @@
 import { useState, useEffect } from 'react';
-import { Wallet, TrendingUp, TrendingDown } from 'lucide-react';
-import { salaireAPI } from '../services/api';
+import { FileText, Download, Maximize2, X, File } from 'lucide-react';
+import { fichePaieAPI } from '../services/api';
 
 function Salaires() {
-  const [salaires, setSalaires] = useState([]);
-  const [salaireActuel, setSalaireActuel] = useState(null);
+  const [fiches, setFiches] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [viewerFiche, setViewerFiche] = useState(null);
+  const [downloading, setDownloading] = useState(null);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchFiches(); }, []);
 
-  const fetchData = async () => {
+  const fetchFiches = async () => {
     try {
-      const [salairesRes, actuelRes] = await Promise.all([
-        salaireAPI.getSalaires(),
-        salaireAPI.getActuel()
-      ]);
-      setSalaires(salairesRes.data);
-      setSalaireActuel(actuelRes.data);
+      const res = await fichePaieAPI.getFiches();
+      setFiches(res.data || []);
     } catch (error) {
-      console.error('Erreur chargement salaires:', error);
+      console.error('Erreur chargement fiches de paie:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const formatMontant = (montant) => {
-    const num = parseFloat(montant) || 0;
-    return new Intl.NumberFormat('fr-MG', { style: 'currency', currency: 'MGA' }).format(num);
+  const formatMois = (mois, annee) => {
+    const moisLabels = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+    return `${moisLabels[mois - 1] || mois} ${annee}`;
   };
-  const getMoisLabel = (mois) => ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'][mois - 1] || '';
+
+  const handleDownload = async (fiche) => {
+    setDownloading(fiche.id);
+    try {
+      const res = await fichePaieAPI.downloadFiche(fiche.id);
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fiche.nom || `Fiche_Paie_${fiche.mois}_${fiche.annee}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Erreur téléchargement:', error);
+    } finally {
+      setDownloading(null);
+    }
+  };
+
+  const getFicheUrl = (id) => `https://apiv2.aris-cc.com/api/fiches-paie/${id}/download`;
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-96"><p className="text-white bg-black/50 px-4 py-2 rounded-lg">Chargement...</p></div>;
@@ -37,84 +54,112 @@ function Salaires() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Mon Salaire</h1>
-        <p className="text-white/70">Consultez vos bulletins de salaire</p>
+        <h1 className="text-3xl font-bold text-white mb-2">Fiche de Paye</h1>
+        <p className="text-white/70">Consultez et téléchargez vos fiches de paie</p>
       </div>
-
-      <div className="mb-6 p-4 bg-amber-500/20 border border-amber-500/30 rounded-xl flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg bg-amber-500/30 flex items-center justify-center shrink-0">
-          <TrendingUp size={18} className="text-amber-400" />
-        </div>
-        <p className="text-amber-300 text-sm font-medium">En cours de maintenance</p>
-      </div>
-
-      {salaireActuel && (
-        <div className="bg-gradient-to-r from-blue-600/80 to-blue-800/80 backdrop-blur-md rounded-2xl p-8 text-white mb-8 border border-white/20">
-          <h3 className="text-lg opacity-90 mb-2">Salaire du {getMoisLabel(salaireActuel.mois)} {salaireActuel.annee}</h3>
-          <div className="text-5xl font-bold mb-2">{formatMontant(salaireActuel.salaire_net)}</div>
-          <p className="opacity-80">Net à payer</p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <label className="text-sm opacity-80 block mb-1">Salaire de base</label>
-              <span className="text-2xl font-semibold">{formatMontant(salaireActuel.salaire_base)}</span>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <label className="text-sm opacity-80 block mb-1">Primes</label>
-              <span className="text-2xl font-semibold text-green-300">+{formatMontant(salaireActuel.primes)}</span>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <label className="text-sm opacity-80 block mb-1">Déductions</label>
-              <span className="text-2xl font-semibold text-red-300">-{formatMontant(salaireActuel.deductions)}</span>
-            </div>
-          </div>
-        </div>
-      )}
 
       <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden">
         <div className="p-6 border-b border-white/20">
-          <h2 className="text-xl font-semibold text-white flex items-center gap-2"><Wallet size={24} /> Historique des salaires</h2>
+          <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+            <FileText size={24} /> Mes fiches de paie
+          </h2>
         </div>
 
-        {salaires.length === 0 ? (
+        {fiches.length === 0 ? (
           <div className="p-12 text-center">
-            <Wallet size={64} className="mx-auto text-white/30 mb-4" />
-            <h3 className="text-lg font-semibold text-white mb-2">Aucun bulletin de salaire</h3>
-            <p className="text-white/60">Vos bulletins de salaire apparaîtront ici</p>
+            <FileText size={64} className="mx-auto text-white/30 mb-4" />
+            <h3 className="text-lg font-semibold text-white mb-2">Aucune fiche de paie</h3>
+            <p className="text-white/60">Vos fiches de paie apparaîtront ici une fois publiées par l'administration</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-black/30">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-white/70 uppercase">Période</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-white/70 uppercase">Salaire de base</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-white/70 uppercase">Primes</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-white/70 uppercase">Déductions</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-white/70 uppercase">Salaire net</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-white/70 uppercase">Statut</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/10">
-                {salaires.map((salaire) => (
-                  <tr key={salaire.id} className="hover:bg-white/5 transition-colors">
-                    <td className="px-6 py-4 text-sm text-white">{getMoisLabel(salaire.mois)} {salaire.annee}</td>
-                    <td className="px-6 py-4 text-sm text-white">{formatMontant(salaire.salaire_base)}</td>
-                    <td className="px-6 py-4 text-sm text-green-400 flex items-center gap-1"><TrendingUp size={14} />{formatMontant(salaire.primes)}</td>
-                    <td className="px-6 py-4 text-sm text-red-400 flex items-center gap-1"><TrendingDown size={14} />{formatMontant(salaire.deductions)}</td>
-                    <td className="px-6 py-4 text-sm font-semibold text-white">{formatMontant(salaire.salaire_net)}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${salaire.statut_paiement === 'paye' ? 'bg-green-500/20 text-green-400' : 'bg-amber-500/20 text-amber-400'}`}>
-                        {salaire.statut_paiement === 'paye' ? 'Payé' : 'En attente'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="space-y-3 p-6">
+            {fiches.map((fiche) => (
+              <div
+                key={fiche.id}
+                className="flex items-center justify-between p-4 bg-white/10 rounded-lg hover:bg-white/15 transition-colors"
+              >
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <File size={24} className="text-green-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-white font-medium truncate">
+                      Fiche de paie - {formatMois(fiche.mois, fiche.annee)}
+                    </h3>
+                    <p className="text-sm text-white/50">
+                      {fiche.nom || `Fiche_Paie_${fiche.mois}_${fiche.annee}.pdf`}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    onClick={() => setViewerFiche(fiche)}
+                    className="p-2 hover:bg-white/10 rounded-lg text-blue-400 hover:text-blue-300 transition-colors"
+                    title="Voir en plein écran"
+                  >
+                    <Maximize2 size={20} />
+                  </button>
+                  <button
+                    onClick={() => handleDownload(fiche)}
+                    disabled={downloading === fiche.id}
+                    className="p-2 hover:bg-white/10 rounded-lg text-green-400 hover:text-green-300 transition-colors disabled:opacity-50"
+                    title="Télécharger"
+                  >
+                    {downloading === fiche.id ? (
+                      <div className="w-5 h-5 border-2 border-green-400/30 border-t-green-400 rounded-full animate-spin" />
+                    ) : (
+                      <Download size={20} />
+                    )}
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
+
+      {viewerFiche && (
+        <div
+          className="fixed inset-0 bg-black/90 z-[9999] flex flex-col"
+          onClick={() => setViewerFiche(null)}
+        >
+          <div
+            className="flex items-center justify-between px-6 py-4 bg-slate-900 border-b border-white/20"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-white font-semibold text-lg">
+              Fiche de paie - {formatMois(viewerFiche.mois, viewerFiche.annee)}
+            </h3>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => handleDownload(viewerFiche)}
+                disabled={downloading === viewerFiche.id}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50"
+              >
+                {downloading === viewerFiche.id ? (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <Download size={18} />
+                )}
+                Télécharger
+              </button>
+              <button
+                onClick={() => setViewerFiche(null)}
+                className="p-2 hover:bg-white/10 rounded-lg text-white/70 hover:text-white transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+          </div>
+          <div className="flex-1 p-4" onClick={(e) => e.stopPropagation()}>
+            <iframe
+              src={getFicheUrl(viewerFiche.id)}
+              className="w-full h-full rounded-lg border border-white/20"
+              title={`Fiche de paie ${formatMois(viewerFiche.mois, viewerFiche.annee)}`}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

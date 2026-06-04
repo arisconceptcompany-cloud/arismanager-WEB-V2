@@ -135,8 +135,8 @@ function Layout({ user, children }) {
     { path: '/pointages', icon: Clock, label: 'Mes pointages' },
     { path: '/conges', icon: Calendar, label: 'Mes congés', badge: notifCount },
     { path: '/projets', icon: FolderKanban, label: 'Projets' },
-    { path: '/salaires', icon: Wallet, label: 'Mon salaire' },
-    { path: '/rapports', icon: FileText, label: 'Mon rapport' },
+    { path: '/salaires', icon: Wallet, label: 'Fiche de Paye' },
+    { path: '/rapports', icon: FileText, label: 'Mon compte rendu' },
   ];
 
   const closeSidebar = () => {
