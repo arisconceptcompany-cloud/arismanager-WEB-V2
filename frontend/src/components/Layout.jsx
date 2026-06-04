@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, User, Clock, Calendar, FolderKanban, 
   Wallet, FileText, LogOut, MessageCircle, Bell, X, Check, CheckCheck, Menu, X as CloseIcon, Lock, Eye, EyeOff
 } from 'lucide-react';
 import { authAPI, chatAPI, notificationAPI, DEFAULT_AVATAR } from '../services/api';
+import api from '../services/api';
 import { useUser } from '../context/UserContext';
 
 function Layout({ user, children }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { profilePhoto, handlePhotoError, photoError } = useUser();
 
   const [unreadCount, setUnreadCount] = useState(0);
@@ -23,6 +25,8 @@ function Layout({ user, children }) {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const [notification, setNotification] = useState(null);
+  const [newFicheCount, setNewFicheCount] = useState(0);
+  const [showFicheBanner, setShowFicheBanner] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -67,6 +71,51 @@ function Layout({ user, children }) {
       fetchNotifications();
     }
   }, [showNotifs]);
+
+  useEffect(() => {
+    const checkNewFiches = async () => {
+      try {
+        const res = await api.get('/fiches-paie');
+        const fiches = res.data || [];
+        if (fiches.length === 0) return;
+
+        const storageKey = `viewedFiches_${user?.id}`;
+        const viewed = JSON.parse(localStorage.getItem(storageKey) || '[]');
+        const unviewed = fiches.filter(f => !viewed.includes(f.id));
+
+        setNewFicheCount(unviewed.length);
+        setShowFicheBanner(unviewed.length > 0);
+      } catch (error) {
+        // Silently fail
+      }
+    };
+    checkNewFiches();
+    const interval = setInterval(checkNewFiches, 30000);
+    return () => clearInterval(interval);
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (location.pathname === '/salaires') {
+      const markViewed = async () => {
+        try {
+          const res = await api.get('/fiches-paie');
+          const fiches = res.data || [];
+          if (fiches.length > 0) {
+            const storageKey = `viewedFiches_${user?.id}`;
+            const ids = fiches.map(f => f.id);
+            localStorage.setItem(storageKey, JSON.stringify(ids));
+          }
+        } catch (error) {}
+        setNewFicheCount(0);
+        setShowFicheBanner(false);
+      };
+      markViewed();
+    }
+  }, [location.pathname, user?.id]);
+
+  const dismissFicheBanner = () => {
+    setShowFicheBanner(false);
+  };
 
   // Bloquer le scroll body uniquement sur mobile quand sidebar ouverte
   useEffect(() => {
@@ -135,7 +184,7 @@ function Layout({ user, children }) {
     { path: '/pointages', icon: Clock, label: 'Mes pointages' },
     { path: '/conges', icon: Calendar, label: 'Mes congés', badge: notifCount },
     { path: '/projets', icon: FolderKanban, label: 'Projets' },
-    { path: '/salaires', icon: Wallet, label: 'Fiche de Paye' },
+    { path: '/salaires', icon: Wallet, label: 'Fiche de Paye', badge: newFicheCount },
     { path: '/rapports', icon: FileText, label: 'Mon compte rendu' },
   ];
 
@@ -391,6 +440,34 @@ function Layout({ user, children }) {
             <LogOut size={20} className="text-white" />
           </button>
         </div>
+
+        {/* Bannière fiche de paie */}
+        {showFicheBanner && (
+          <div className="mx-3 sm:mx-4 md:mx-6 lg:mx-8 mt-4 flex items-center justify-between px-5 py-3 bg-red-600/90 backdrop-blur-md rounded-xl border border-red-400/50 animate-slide-in">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                <Wallet size={18} className="text-white" />
+              </div>
+              <p className="text-white font-medium text-sm">
+                Fiche de paye disponible ! Veuillez le consulter
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => navigate('/salaires')}
+                className="px-4 py-1.5 bg-white/20 hover:bg-white/30 text-white text-sm rounded-lg transition-colors"
+              >
+                Voir
+              </button>
+              <button
+                onClick={dismissFicheBanner}
+                className="p-1.5 hover:bg-white/20 rounded-lg text-white/70 hover:text-white transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Contenu */}
         <div className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8">

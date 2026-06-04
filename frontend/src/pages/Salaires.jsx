@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react';
-import { FileText, Download, Maximize2, X, File } from 'lucide-react';
+import { FileText, Download, Maximize2, X, File, Trash2 } from 'lucide-react';
 import { fichePaieAPI } from '../services/api';
+import api from '../services/api';
+import { useUser } from '../context/UserContext';
 
 function Salaires() {
+  const { user } = useUser();
   const [fiches, setFiches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewerFiche, setViewerFiche] = useState(null);
+  const [viewerUrl, setViewerUrl] = useState(null);
+  const [viewerLoading, setViewerLoading] = useState(false);
   const [downloading, setDownloading] = useState(null);
 
   useEffect(() => { fetchFiches(); }, []);
@@ -45,7 +50,37 @@ function Salaires() {
     }
   };
 
-  const getFicheUrl = (id) => `https://apiv2.aris-cc.com/api/fiches-paie/${id}/download`;
+  const openViewer = async (fiche) => {
+    setViewerFiche(fiche);
+    setViewerLoading(true);
+    try {
+      const res = await fichePaieAPI.downloadFiche(fiche.id);
+      const blob = new Blob([res.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      setViewerUrl(url);
+    } catch (error) {
+      console.error('Erreur chargement PDF:', error);
+      setViewerFiche(null);
+    } finally {
+      setViewerLoading(false);
+    }
+  };
+
+  const closeViewer = () => {
+    if (viewerUrl) window.URL.revokeObjectURL(viewerUrl);
+    setViewerUrl(null);
+    setViewerFiche(null);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Supprimer cette fiche de paie ?')) return;
+    try {
+      await api.delete(`/admin/fiches-paie/${id}`);
+      setFiches(prev => prev.filter(f => f.id !== id));
+    } catch (error) {
+      console.error('Erreur suppression:', error);
+    }
+  };
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-96"><p className="text-white bg-black/50 px-4 py-2 rounded-lg">Chargement...</p></div>;
@@ -93,7 +128,7 @@ function Salaires() {
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <button
-                    onClick={() => setViewerFiche(fiche)}
+                    onClick={() => openViewer(fiche)}
                     className="p-2 hover:bg-white/10 rounded-lg text-blue-400 hover:text-blue-300 transition-colors"
                     title="Voir en plein écran"
                   >
@@ -111,6 +146,15 @@ function Salaires() {
                       <Download size={20} />
                     )}
                   </button>
+                  {user?.role === 'admin' && (
+                    <button
+                      onClick={() => handleDelete(fiche.id)}
+                      className="p-2 hover:bg-white/10 rounded-lg text-red-400 hover:text-red-300 transition-colors"
+                      title="Supprimer"
+                    >
+                      <Trash2 size={20} />
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -121,7 +165,7 @@ function Salaires() {
       {viewerFiche && (
         <div
           className="fixed inset-0 bg-black/90 z-[9999] flex flex-col"
-          onClick={() => setViewerFiche(null)}
+          onClick={closeViewer}
         >
           <div
             className="flex items-center justify-between px-6 py-4 bg-slate-900 border-b border-white/20"
@@ -144,7 +188,7 @@ function Salaires() {
                 Télécharger
               </button>
               <button
-                onClick={() => setViewerFiche(null)}
+                onClick={closeViewer}
                 className="p-2 hover:bg-white/10 rounded-lg text-white/70 hover:text-white transition-colors"
               >
                 <X size={24} />
@@ -152,11 +196,21 @@ function Salaires() {
             </div>
           </div>
           <div className="flex-1 p-4" onClick={(e) => e.stopPropagation()}>
-            <iframe
-              src={getFicheUrl(viewerFiche.id)}
-              className="w-full h-full rounded-lg border border-white/20"
-              title={`Fiche de paie ${formatMois(viewerFiche.mois, viewerFiche.annee)}`}
-            />
+            {viewerLoading ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              </div>
+            ) : viewerUrl ? (
+              <iframe
+                src={viewerUrl}
+                className="w-full h-full rounded-lg border border-white/20"
+                title={`Fiche de paie ${formatMois(viewerFiche.mois, viewerFiche.annee)}`}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-white/50">
+                Erreur lors du chargement du PDF
+              </div>
+            )}
           </div>
         </div>
       )}

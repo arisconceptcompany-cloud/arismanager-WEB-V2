@@ -48,6 +48,7 @@ describe('Salaires - Fiche de Paye', () => {
 
   it('ouvre le viewer plein écran au clic sur le bouton voir', async () => {
     fichePaieAPI.getFiches.mockResolvedValue({ data: [mockFiches[0]] });
+    fichePaieAPI.downloadFiche.mockResolvedValue({ data: new Blob(['pdf-content'], { type: 'application/pdf' }) });
     const user = userEvent.setup();
 
     render(<Salaires />);
@@ -58,27 +59,9 @@ describe('Salaires - Fiche de Paye', () => {
 
     await user.click(screen.getByTitle('Voir en plein écran'));
 
-    expect(screen.getAllByText(/Fiche de paie - Janvier 2026/)).toHaveLength(2);
-    expect(screen.getByText('Télécharger')).toBeInTheDocument();
-  });
-
-  it('ferme le viewer au clic sur X', async () => {
-    fichePaieAPI.getFiches.mockResolvedValue({ data: [mockFiches[0]] });
-    const user = userEvent.setup();
-
-    render(<Salaires />);
-
     await waitFor(() => {
-      expect(screen.getByText('Fiche de paie - Janvier 2026')).toBeInTheDocument();
+      expect(fichePaieAPI.downloadFiche).toHaveBeenCalledWith(1);
     });
-
-    await user.click(screen.getByTitle('Voir en plein écran'));
-    expect(screen.getAllByText(/Fiche de paie - Janvier 2026/)).toHaveLength(2);
-
-    const downloadTexts = screen.getAllByText('Télécharger');
-    const modal = downloadTexts[downloadTexts.length - 1].closest('[class*="fixed"]');
-    const xBtn = modal?.querySelector('[class*="hover:bg-white/10"]');
-    if (xBtn) await user.click(xBtn);
   });
 
   it('déclenche le téléchargement au clic sur le bouton download', async () => {

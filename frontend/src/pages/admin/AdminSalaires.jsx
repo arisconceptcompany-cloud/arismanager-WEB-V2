@@ -138,14 +138,14 @@ function AdminSalaires() {
               value={selectedEmploye}
               onChange={(e) => setSelectedEmploye(e.target.value)}
               required
-              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-red-500"
+              className="w-full px-4 py-3 bg-slate-800 border border-white/20 rounded-lg text-white focus:outline-none focus:border-red-500"
             >
-              <option value="">Sélectionner un employé</option>
+              <option value="" className="bg-slate-800 text-white/60">Sélectionner un employé</option>
               {employesDisponibles.length === 0 && selectedMois ? (
-                <option value="" disabled>Tous les employés ont déjà une fiche pour ce mois</option>
+                <option value="" disabled className="bg-slate-800 text-white/50">Tous les employés ont déjà une fiche pour ce mois</option>
               ) : (
                 employesDisponibles.map(emp => (
-                  <option key={emp.id} value={emp.id}>{emp.prenom} {emp.nom} ({emp.matricule})</option>
+                  <option key={emp.id} value={emp.id} className="bg-slate-800 text-white">{emp.prenom} {emp.nom} ({emp.matricule})</option>
                 ))
               )}
             </select>
@@ -155,7 +155,7 @@ function AdminSalaires() {
               value={selectedMois}
               onChange={(e) => setSelectedMois(e.target.value)}
               required
-              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-red-500"
+              className="w-full px-4 py-3 bg-slate-800 border border-white/20 rounded-lg text-white focus:outline-none focus:border-red-500"
             />
 
             <input
@@ -164,7 +164,7 @@ function AdminSalaires() {
               accept=".pdf"
               onChange={handleFileSelect}
               required
-              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-red-600 file:text-white file:cursor-pointer"
+              className="w-full px-4 py-3 bg-slate-800 border border-white/20 rounded-lg text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-red-600 file:text-white file:cursor-pointer file:font-medium"
             />
           </div>
 
@@ -218,11 +218,11 @@ function AdminSalaires() {
             <select
               value={filterEmploye}
               onChange={(e) => setFilterEmploye(e.target.value)}
-              className="px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-red-500"
+              className="px-4 py-2 bg-slate-800 border border-white/20 rounded-lg text-white focus:outline-none focus:border-red-500"
             >
-              <option value="all">Tous les employés</option>
+              <option value="all" className="bg-slate-800 text-white">Tous les employés</option>
               {employes.map(emp => (
-                <option key={emp.id} value={emp.id}>{emp.prenom} {emp.nom}</option>
+                <option key={emp.id} value={emp.id} className="bg-slate-800 text-white">{emp.prenom} {emp.nom}</option>
               ))}
             </select>
           </div>
@@ -230,7 +230,7 @@ function AdminSalaires() {
             type="month"
             value={filterAnnee}
             onChange={(e) => setFilterAnnee(e.target.value)}
-            className="px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-red-500"
+            className="px-4 py-2 bg-slate-800 border border-white/20 rounded-lg text-white focus:outline-none focus:border-red-500"
           />
         </div>
       </div>
@@ -287,10 +287,11 @@ function AdminSalaires() {
                     </button>
                     <button
                       onClick={() => handleDelete(fiche.id)}
-                      className="p-2 hover:bg-white/10 rounded-lg text-red-400 hover:text-red-300 transition-colors"
+                      className="flex items-center gap-1.5 px-3 py-2 bg-red-600/20 hover:bg-red-600/40 text-red-400 hover:text-red-300 rounded-lg transition-colors"
                       title="Supprimer"
                     >
-                      <Trash2 size={20} />
+                      <Trash2 size={16} />
+                      <span className="text-sm font-medium">Supprimer</span>
                     </button>
                   </div>
                 </div>
